@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <string.h>
 
 /*
 	Hoang Ho - 1001654608
@@ -11,13 +12,22 @@
 	02/13/2021
 */
 
+static int countdown = 10;
+
+/*
+	handles SIGALRM signal - pr
+	sig - signal caught
+*/
+static void alarm_handler(int sig)
+{
+	printf("%d\n", countdown);
+	countdown--;
+}
+
 /*
   fork() a child and print a message from the parent and 
   a message from the child
 */
-
-
-
 int main()
 {
   pid_t pid = fork();
@@ -32,13 +42,23 @@ int main()
   {
     // When fork() returns 0, we are in the child process.
     
-    //loop decrements countdown each time it iterates and prints out remaining time, sleep(1 second) is used to make sure the next countdown statement does not execute until 1 second has passed 
-    int countdown = 10;
-    while(countdown >= 0)
+    struct sigaction action;
+    memset(&action, '\0', sizeof(action)); //zero out sigaction struct
+    
+    action.sa_handler = &alarm_handler; //sets the handler to use alarm_handler()
+    
+    //installing the handler and checking its return value
+    if(sigaction(SIGALRM, &action, NULL) < 0)
     {
-    	printf("%d\n", countdown);
-    	countdown--;
-    	sleep(1); //delay for 1 second
+    	perror("sigaction: ");
+    	exit(EXIT_FAILURE);
+    }
+    
+    //loop sets a new alarm for 1 second everytime an alarm finishes and SIGALRM signal is received and calls alarm_handler()
+    while(countdown>=0)
+    {
+    	alarm(1);
+    	sleep(1);
     }
     
     fflush(NULL);
