@@ -24,10 +24,16 @@
 
 #define MAX_NUM_ARGUMENTS 10     // Mav shell only supports ten arguments
 
+#define MAX_NUM_PIDS 15 //max number of pids to keep track of
+
 int main()
 {
 
-  char * cmd_str = (char*) malloc( MAX_COMMAND_SIZE );
+  char* cmd_str = (char*) malloc( MAX_COMMAND_SIZE );
+
+  //keeping track of the last 15 processes spawned off the shell
+  pid_t pids[MAX_NUM_PIDS];
+  int pids_index = 0;
 
   while( 1 )
   {
@@ -42,20 +48,20 @@ int main()
     while( !fgets (cmd_str, MAX_COMMAND_SIZE, stdin) );
 
     /* Parse input */
-    char *arguments[MAX_NUM_ARGUMENTS];
+    char* arguments[MAX_NUM_ARGUMENTS];
 
     int   arg_count = 0;                                 
                                                            
     // Pointer to point to the token
     // parsed by strsep
-    char *argument_ptr;                                         
+    char* argument_ptr;                                         
                                                            
-    char *working_str  = strdup( cmd_str );                
+    char* working_str  = strdup( cmd_str );                
 
     // we are going to move the working_str pointer so
     // keep track of its original value so we can deallocate
     // the correct amount at the end
-    char *working_root = working_str;
+    char* working_root = working_str;
 
     // Tokenize the input strings with whitespace used as the delimiter
     while( ( (argument_ptr = strsep(&working_str, WHITESPACE ) ) != NULL) && 
@@ -69,32 +75,58 @@ int main()
       arg_count++;
     }
 
+    //execute a process depending on the inputs user has given
+    //arguments[0] is the command to execute a process
+    //arguments[1...n] is all the command options to the command arguments[0]
     if(strcmp(arguments[0], "exit") == 0 || strcmp(arguments[0], "quit") == 0)
     {
         exit(EXIT_SUCCESS);
     }
     else if(arguments[0] != NULL)
     {
-        pid_t pid = fork();
+        pids[pids_index++] = fork();
+        //reset the index keeping track of current position we are in the pids[] array to the beginning
+        //if we already have 15 pids in the list
+        if (pid_index > 14)
+        {
+            pids_index = 0;
+        }
+
         int status;
 
-        if (pid == -1) //failed fork
+        if(pid == -1) //failed fork
         {
-            perror("fork failed: ");
+            perror("Fork failed: ");
             exit(EXIT_FAILURE);
         }
-        else if (pid == 0) //if we are in the child process
+        else if(pids[pids_index] == 0) //if we are in the child process
         {
+            if(strcmp(arguments[0], "cd")) //command for changing directories
+            {
+                if(!chdir(arguments[1]))
+                {
+                    printf("Invalid directory\n");
+                }
+            }
+            else if(strcmp(arguments[0], "listpids")) //list out pids of last 15 processes spawned off msh.c
+            {
+                int i;
+                for(i=0; i<pids_index; ++i)
+                {
+                    printf("%d: %d\n", i, pids[i]);
+                }
+            }
+
             int ret = execvp(arguments[0], arguments);
 
-            if (ret == -1) //if the execvp failed
+            if(ret == -1) //if the execvp failed
             {
                 printf("%s: Command not found\n", arguments[0]);
                 exit(EXIT_SUCCESS);
             }
         }
         //otherwise we are in the parent process
-        waitpid(pid, &status, 0); //blocking parent process from doing anything until child process returns
+        waitpid(pids[pids_index], &status, 0); //blocking parent process from doing anything until child process returns
     }
 
     int arg_index  = 0;
