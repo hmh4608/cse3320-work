@@ -59,9 +59,9 @@ int main()
 
     // Tokenize the input strings with whitespace used as the delimiter
     while( ( (argument_ptr = strsep(&working_str, WHITESPACE ) ) != NULL) && 
-              (token_count<MAX_NUM_ARGUMENTS) )
+              (arg_count<MAX_NUM_ARGUMENTS) )
     {
-      token[token_count] = strndup( argument_ptr, MAX_COMMAND_SIZE );
+      arguments[token_count] = strndup( argument_ptr, MAX_COMMAND_SIZE );
       if( strlen( arguments[arg_count] ) == 0 )
       {
         arguments[arg_count] = NULL;
@@ -69,7 +69,7 @@ int main()
       arg_count++;
     }
 
-    if(arguments[0] == "exit" || arguments[0] == "quit")
+    if(strcmp(arguments[0], "exit") == 0 || strcmp(arguments[0], "quit") == 0)
     {
         exit(EXIT_SUCCESS);
     }
@@ -87,7 +87,7 @@ int main()
         {
             int ret = execvp(arguments[0], arguments);
 
-            if (ret = -1) //if the execvp failed
+            if (ret == -1) //if the execvp failed
             {
                 printf("%s: Command not found\n", arguments[0]);
                 exit(EXIT_SUCCESS);
