@@ -61,7 +61,7 @@ int main()
     while( ( (argument_ptr = strsep(&working_str, WHITESPACE ) ) != NULL) && 
               (arg_count<MAX_NUM_ARGUMENTS) )
     {
-      arguments[token_count] = strndup( argument_ptr, MAX_COMMAND_SIZE );
+      arguments[arg_count] = strndup( argument_ptr, MAX_COMMAND_SIZE );
       if( strlen( arguments[arg_count] ) == 0 )
       {
         arguments[arg_count] = NULL;
