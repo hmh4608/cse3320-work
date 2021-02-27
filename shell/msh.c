@@ -1,29 +1,6 @@
-// The MIT License (MIT)
-// 
-// Copyright (c) 2016, 2017, 2021 Trevor Bakker 
-// 
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-// 
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-// 
-// 7f704d5f-9811-4b91-a918-57c1bb646b70
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
-
 /*
-* Hoang Ho
-* ID 1001654608
+* Name: Hoang Ho
+* ID: 1001654608
 * CSE 3320-003
 * Due March 1, 2021 by 5:30 pm
 */
@@ -65,9 +42,9 @@ int main()
     while( !fgets (cmd_str, MAX_COMMAND_SIZE, stdin) );
 
     /* Parse input */
-    char *token[MAX_NUM_ARGUMENTS];
+    char *arguments[MAX_NUM_ARGUMENTS];
 
-    int   token_count = 0;                                 
+    int   arg_count = 0;                                 
                                                            
     // Pointer to point to the token
     // parsed by strsep
@@ -85,24 +62,48 @@ int main()
               (token_count<MAX_NUM_ARGUMENTS))
     {
       token[token_count] = strndup( argument_ptr, MAX_COMMAND_SIZE );
-      if( strlen( token[token_count] ) == 0 )
+      if( strlen( arguments[arg_count] ) == 0 )
       {
-        token[token_count] = NULL;
+        arguments[arg_count] = NULL;
       }
-      token_count++;
+      arg_count++;
     }
 
-    // Now print the tokenized input as a debug check
-    // \TODO Remove this code and replace with your shell functionality
-
-    int token_index  = 0;
-    for( token_index = 0; token_index < token_count; token_index ++ ) 
+    if (arguments[0] = "exit" || arguments[0] = "quit")
     {
-      printf("token[%d] = %s\n", token_index, token[token_index] );  
+        exit(EXIT_SUCCESS);
+    }
+    else if (arguments[0] != NULL)
+    {
+        pid_t pid = fork();
+        int status;
+
+        if (pid == -1) //failed fork
+        {
+            perror("fork failed: ");
+            exit(EXIT_FAILURE);
+        }
+        else if (pid == 0) //if we are in the child process
+        {
+            int ret = execvp(arguments[0], arguments);
+
+            if (ret = -1) //if the execvp failed
+            {
+                printf("%s: Command not found\n", arguments[0]);
+                exit(EXIT_SUCCESS);
+            }
+        }
+        //otherwise we are in the parent process
+        waitpid(pid, &status, 0); //blocking parent process from doing anything until child process returns
+    }
+
+    int arg_index  = 0;
+    for( arg_index = 0; arg_index < arg_count; arg_index ++ ) 
+    {
+      printf("token[%d] = %s\n", arg_index, arguments[arg_index] );  
     }
 
     free( working_root );
-
   }
   return 0;
 }
