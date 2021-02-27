@@ -87,9 +87,9 @@ int main()
       token[token_count] = strndup( argument_ptr, MAX_COMMAND_SIZE );
       if( strlen( token[token_count] ) == 0 )
       {
-        token[token_count] = NULL;
+          printf("msh> ");
       }
-        token_count++;
+      token_count++;
     }
 
     // Now print the tokenized input as a debug check
