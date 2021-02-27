@@ -87,7 +87,7 @@ int main()
       token[token_count] = strndup( argument_ptr, MAX_COMMAND_SIZE );
       if( strlen( token[token_count] ) == 0 )
       {
-          printf("msh> ");
+        token[token_count] = NULL;
       }
       token_count++;
     }
