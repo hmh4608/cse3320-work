@@ -82,41 +82,40 @@ int main()
     {
         exit(EXIT_SUCCESS);
     }
+    else if(strcmp(arguments[0], "cd")) //command for changing directories
+    {
+        if(!chdir(arguments[1]))
+        {
+            printf("Invalid directory\n");
+        }
+    }
+    else if(strcmp(arguments[0], "listpids")) //list out pids of last 15 processes spawned off msh.c
+    {
+        int i;
+        for(i = 0; i < pids_index; ++i)
+        {
+            printf("%d: %d\n", i, pids[i]);
+        }
+    }
     else if(arguments[0] != NULL)
     {
         pids[pids_index++] = fork();
         //reset the index keeping track of current position we are in the pids[] array to the beginning
         //if we already have 15 pids in the list
-        if (pid_index > 14)
+        if (pids_index > 14)
         {
             pids_index = 0;
         }
 
         int status;
 
-        if(pid == -1) //failed fork
+        if(pids[pids_index] == -1) //failed fork
         {
             perror("Fork failed: ");
             exit(EXIT_FAILURE);
         }
         else if(pids[pids_index] == 0) //if we are in the child process
         {
-            if(strcmp(arguments[0], "cd")) //command for changing directories
-            {
-                if(!chdir(arguments[1]))
-                {
-                    printf("Invalid directory\n");
-                }
-            }
-            else if(strcmp(arguments[0], "listpids")) //list out pids of last 15 processes spawned off msh.c
-            {
-                int i;
-                for(i=0; i<pids_index; ++i)
-                {
-                    printf("%d: %d\n", i, pids[i]);
-                }
-            }
-
             int ret = execvp(arguments[0], arguments);
 
             if(ret == -1) //if the execvp failed
