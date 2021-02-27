@@ -58,8 +58,8 @@ int main()
     char *working_root = working_str;
 
     // Tokenize the input strings with whitespace used as the delimiter
-    while ( ( (argument_ptr = strsep(&working_str, WHITESPACE ) ) != NULL) && 
-              (token_count<MAX_NUM_ARGUMENTS))
+    while( ( (argument_ptr = strsep(&working_str, WHITESPACE ) ) != NULL) && 
+              (token_count<MAX_NUM_ARGUMENTS) )
     {
       token[token_count] = strndup( argument_ptr, MAX_COMMAND_SIZE );
       if( strlen( arguments[arg_count] ) == 0 )
@@ -69,11 +69,11 @@ int main()
       arg_count++;
     }
 
-    if (arguments[0] = "exit" || arguments[0] = "quit")
+    if(arguments[0] == "exit" || arguments[0] == "quit")
     {
         exit(EXIT_SUCCESS);
     }
-    else if (arguments[0] != NULL)
+    else if(arguments[0] != NULL)
     {
         pid_t pid = fork();
         int status;
@@ -100,7 +100,7 @@ int main()
     int arg_index  = 0;
     for( arg_index = 0; arg_index < arg_count; arg_index ++ ) 
     {
-      printf("token[%d] = %s\n", arg_index, arguments[arg_index] );  
+      printf("arguments[%d] = %s\n", arg_index, arguments[arg_index] );  
     }
 
     free( working_root );
