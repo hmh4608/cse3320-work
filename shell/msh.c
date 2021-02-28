@@ -88,14 +88,20 @@ int main()
     }
     //set all values in the string to NULL in case a shorter string overwrites it later
     memset(history[history_pos], '\0', MAX_COMMAND_SIZE);
-    if(strcmp(working_str, "\n") != 0) //check if the user has only pressed enter
+    //remove any \n at the end of the working_str if stored by fgets by replacing with a null terminator
+    //since fgets will not keep any characters in positions >= MAX_COMMAND_SIZE
+    //strcspn will return the number of characters until the first occurrence of \n
+    //if no \n are present, the length of the string is returned
+    int pos = strcspn(working_str, '\n')-1; //position of the first occurrence of \n
+    if( != strlen(working_str))
     {
-        strcpy(history[history_pos], working_str);
-        history_pos++;
-        if(history_count < MAX_NUM_TRACK)
-        {
-            history_count++;
-        }
+        working_str[pos] = '\0';
+    }
+    strcpy(history[history_pos], working_str);
+    history_pos++;
+    if(history_count < MAX_NUM_TRACK)
+    {
+        history_count++;
     }
  
     // we are going to move the working_str pointer so
