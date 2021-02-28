@@ -28,7 +28,7 @@
 
 //function prototypes
 void printPIDs(pid_t* pids);
-void printHistory(char* history, int history_pos);
+void printHistory(char*[] history, int history_pos);
 
 int main()
 {
@@ -199,7 +199,7 @@ void printPIDs(pid_t* pids)
 * 
 * history - array of previous commands used 
 */
-void printHistory(char* history, int history_pos)
+void printHistory(char*[] history, int history_pos)
 {
     int pos = history_pos; //storing current position of the oldest command
     int i;
