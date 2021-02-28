@@ -72,8 +72,10 @@ int main()
     //shell re-runs the nth command
     if(working_str[0] == '!')
     {
-        int n = atoi(working_str[1]);
+        int n = atoi(&working_str[1]);
         strcpy(working_str, history[n-1]);
+
+        printf("%d %s %s %s", n, history[n-1], history[n], working_str);
 
         if(strlen(working_str) == 0)
         {
