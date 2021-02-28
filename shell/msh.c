@@ -33,19 +33,19 @@ void printHistory(char** history, int history_pos);
 int main()
 {
 
-  char* cmd_str = (char*)malloc(MAX_COMMAND_SIZE);
+  char* cmd_str = (char*)malloc(sizeof(char) * MAX_COMMAND_SIZE);
   
   //keeping track of the last 15 processes spawned off the shell
   pid_t pids[MAX_NUM_TRACK];
   int pids_pos = 0; //holds the oldest pid in the list
 
   //keeping track of the last 15 commands
-  char** history = (char**)malloc(MAX_NUM_TRACK);
+  char** history = (char**)malloc(sizeof(char*) * MAX_NUM_TRACK);
   //initializing each entry in history in memory
   int i;
   for(i=0; i<MAX_NUM_TRACK; ++i)
   {
-      history[i] = (char*)malloc(MAX_COMMAND_SIZE);
+      history[i] = (char*)malloc(sizeof(char) * MAX_COMMAND_SIZE);
   }
   int history_pos = 0; //holds the oldest command in the history
 
