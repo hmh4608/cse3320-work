@@ -74,8 +74,11 @@ int main()
     }
     //set all values in the string to NULL in case a shorter string overwrites it later
     memset(&history[history_pos], 0, MAX_COMMAND_SIZE);
-    strncpy(history[history_pos], working_str, MAX_COMMAND_SIZE);
-    history_pos++;
+    if(working_str != NULL) //in case the user only presses enter
+    {
+        strncpy(history[history_pos], working_str, MAX_COMMAND_SIZE);
+        history_pos++;
+    }
 
     // we are going to move the working_str pointer so
     // keep track of its original value so we can deallocate
