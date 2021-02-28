@@ -206,7 +206,7 @@ void printHistory(char history[][MAX_COMMAND_SIZE], int history_pos)
         {
             printf("%d: %s\n", i+1, history[pos]);
         }
-        
+        pos++;
         if(pos > MAX_NUM_TRACK-1)
         {
             pos = 0;
