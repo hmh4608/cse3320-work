@@ -87,7 +87,7 @@ int main()
         history_pos = 0;
     }
     //set all values in the string to NULL in case a shorter string overwrites it later
-    memset(history[history_pos], '\0', MAX_COMMAND_SIZE);
+    memset(history[history_pos], 0, MAX_COMMAND_SIZE);
     //remove any \n at the end of the working_str if stored by fgets by replacing with a null terminator
     //since fgets will not keep any characters in positions >= MAX_COMMAND_SIZE
     //strcspn will return the number of characters until the first occurrence of \n
@@ -95,7 +95,7 @@ int main()
     int pos = strcspn(working_str, "\n");
     if(pos != 0)
     {
-        working_str[pos] = '\0';
+        working_str[pos] = NULL;
     }
     strcpy(history[history_pos], working_str);
     history_pos++;
