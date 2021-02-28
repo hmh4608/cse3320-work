@@ -133,7 +133,7 @@ int main()
             printHistory(history, history_pos, history_count);
         }
         
-        else if(working_str[0] == '!') //if the user types !n (n is a number between 1 - 15)
+        else if(arguments[0] == '!') //if the user types !n (n is a number between 1 - 15)
                                        //shell re-runs the nth command
         {
             int n = atoi(&arguments[1]);
