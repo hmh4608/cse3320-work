@@ -28,7 +28,7 @@
 
 //function prototypes
 void printPIDs(pid_t* pids);
-void printHistory(char history[][MAX_COMMAND_SIZE], int history_pos);
+void printHistory(char history[][MAX_COMMAND_SIZE], int history_pos, int count);
 
 int main()
 {
@@ -42,6 +42,7 @@ int main()
   //keeping track of the last 15 commands
   char history[MAX_NUM_TRACK][MAX_COMMAND_SIZE];
   int history_pos = 0; //holds the oldest command or next available slot in the history
+  int history_count = 0; //used to see if history has already been filled up once before
 
   while(1)
   {
@@ -87,14 +88,16 @@ int main()
     }
     //set all values in the string to NULL in case a shorter string overwrites it later
     memset(history[history_pos], '\0', MAX_COMMAND_SIZE);
-    printf("%s %d %s %p\n", working_str, history_pos, history[history_pos], history[history_pos]);
-    if(strcmp(working_str, "\n") != 0)
+    if(strcmp(working_str, "\n") != 0) //check if the user has only pressed enter
     {
         strcpy(history[history_pos], working_str);
         history_pos++;
+        if(history_count < MAX_NUM_TRACK)
+        {
+            history_count++;
+        }
     }
-    printf("%s %d %s %p\n", working_str, history_pos, history[history_pos-1], history[history_pos-1]);
-
+ 
     // we are going to move the working_str pointer so
     // keep track of its original value so we can deallocate
     // the correct amount at the end
@@ -199,19 +202,27 @@ void printPIDs(pid_t* pids)
 /*
 * prints out the list of the last 15 commands used
 * 
-* history - array of previous commands used 
+* history - array of previous commands used
+* history_pos - the position of the oldest command in history or
+                if history has not been filled up at least once, it is the next available slot in history
+* count - used to see if all 15 entries of history has been filled up
 */
-void printHistory(char history[][MAX_COMMAND_SIZE], int history_pos)
+void printHistory(char history[][MAX_COMMAND_SIZE], int history_pos, int count)
 {
-    int pos = history_pos-1; //storing current position of the oldest command or next available slot in history
-    int i;
-    for(i = 0; i < MAX_NUM_TRACK; ++i)
+    if(count < MAX_NUM_TRACK)
     {
-        printf("%d: %s\n", i+1, history[pos]);
-        pos++;
-        if(pos > MAX_NUM_TRACK-1)
+        history_pos = 0; //in the case that we have not filled up history at least once
+                         //since history_pos can be the next available slot in history
+    }
+
+    int i;
+    for(i = 0; i < count; ++i)
+    {
+        printf("%d: %s\n", i+1, history[history_pos]);
+        history_pos++;
+        if(history_pos > MAX_NUM_TRACK-1)
         {
-            pos = 0;
+            history_pos = 0;
         }
     }
 }
