@@ -121,7 +121,7 @@ int main()
             if(ret == -1) //if the execvp failed
             {
                 printf("%s: Command not found\n", arguments[0]);
-                exit(EXIT_SUCCESS);
+                exit(EXIT_FAILURE);
             }
         }
         //otherwise we are in the parent process
