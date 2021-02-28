@@ -43,7 +43,7 @@ int main()
   char** history = (char**)malloc(MAX_NUM_TRACK);
   //initializing each entry in history in memory
   int i;
-  for(i=0; i<MAX_NUM_TRACK; ++i);
+  for(i=0; i<MAX_NUM_TRACK; ++i)
   {
       history[0] = (char*)malloc(MAX_COMMAND_SIZE);
   }
