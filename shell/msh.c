@@ -97,7 +97,7 @@ int main()
             printf("%d: %d\n", i, pids[i]);
         }
     }
-    else if(!(strcmp(arguments[0], NULL) == 0))
+    else if(arguments[0] != NULL)
     {
         pids[pids_index++] = fork();
         int status;
