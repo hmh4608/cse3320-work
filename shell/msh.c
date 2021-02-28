@@ -74,12 +74,12 @@ int main()
 
     //if the user types !n (n is a number between 1 - 15)
     //shell re-runs the nth command
-    if(strcmp(working_str[0], '!') == 0)
+    if(working_str[0] == '!')
     {
-        int n = atoi(working_str[1]);
+        int n = atoi(&working_str[1]);
         strcpy(working_str, history[n]);
 
-        if(strlen(working_str) == 0);
+        if(strlen(working_str) == 0)
         {
             printf("Command not in history.\n");
         }
