@@ -86,13 +86,12 @@ int main()
         history_pos = 0;
     }
     //set all values in the string to NULL in case a shorter string overwrites it later
-    int i;
-    for(i=0; i<MAX_NUM_TRACK; ++i)
+    memset(history[history_pos], '\0', MAX_COMMAND_SIZE);
+    if(strcmp(working_str, "\n") != 0)
     {
-        memset(history[history_pos], '\0', MAX_COMMAND_SIZE);
+        strcpy(history[history_pos], working_str);
+        history_pos++;
     }
-    strcpy(history[history_pos], working_str);
-    history_pos++;
 
     // we are going to move the working_str pointer so
     // keep track of its original value so we can deallocate
