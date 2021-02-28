@@ -145,7 +145,7 @@ int main()
         }
         else if(strcmp(arguments[0], "listpids") == 0) //list out pids of last 15 processes spawned off msh.c
         {
-            printPIDs(pids);
+            printPIDs(pids, pids_pos, pids_count);
         }
         else if(strcmp(arguments[0], "history") == 0) //list out last 15 commands entered
         {
