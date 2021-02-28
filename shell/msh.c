@@ -67,19 +67,6 @@ int main()
                                                            
     char* working_str  = strdup(cmd_str);
 
-    //if the user types !n (n is a number between 1 - 15)
-    //shell re-runs the nth command
-    if(working_str[0] == '!')
-    {
-        int n = atoi(&working_str[1]);
-        strcpy(working_str, history[n-1]);
-
-        if(strlen(working_str) == 0)
-        {
-            printf("Command not in history.\n");
-        }
-    }
-
     //reset the current position of the oldest command entered to 0
     //if we have reached the max stored index of history
     if(history_pos > MAX_NUM_TRACK-1)
@@ -144,6 +131,18 @@ int main()
         else if(strcmp(arguments[0], "history") == 0) //list out last 15 commands entered
         {
             printHistory(history, history_pos, history_count);
+        }
+        
+        else if(working_str[0] == '!') //if the user types !n (n is a number between 1 - 15)
+                                       //shell re-runs the nth command
+        {
+            int n = atoi(&arguments[1]);
+            strcpy(arguments, history[n-1]);
+
+            if(strlen(arguments) == 0)
+            {
+                printf("Command not in history.\n");
+            }
         }
         else
         {
