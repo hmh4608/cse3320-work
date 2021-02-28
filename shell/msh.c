@@ -76,7 +76,7 @@ int main()
     memset(&history[history_pos], 0, MAX_COMMAND_SIZE);
     if(working_str != NULL) //in case the user only presses enter
     {
-        strncpy(history[history_pos], working_str, MAX_COMMAND_SIZE);
+        strncpy(&(history[history_pos]), working_str, MAX_COMMAND_SIZE);
         history_pos++;
     }
 
@@ -163,7 +163,7 @@ int main()
 
     free( working_root );
   }
-  return 0;
+  exit(EXIT_SUCCESS);
 }
 
 /*
