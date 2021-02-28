@@ -95,7 +95,7 @@ int main()
     int pos = strcspn(working_str, "\n");
     if(pos != 0)
     {
-        working_str[pos] = NULL;
+        working_str[pos] = '\0';
     }
     strcpy(history[history_pos], working_str);
     history_pos++;
