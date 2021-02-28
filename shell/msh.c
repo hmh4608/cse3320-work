@@ -168,7 +168,7 @@ int main()
 * 
 * pids - array of the last 15 processes
 */
-void printPIDS(pid_t* pids)
+void printPIDs(pid_t* pids)
 {
     int i;
     for(i=0; i<MAX_NUM_TRACK; ++i)
