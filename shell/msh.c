@@ -33,14 +33,20 @@ void printHistory(char** history, int history_pos);
 int main()
 {
 
-  char* cmd_str = (char*) malloc( MAX_COMMAND_SIZE );
-
+  char* cmd_str = (char*)malloc(MAX_COMMAND_SIZE);
+  
   //keeping track of the last 15 processes spawned off the shell
   pid_t pids[MAX_NUM_TRACK];
   int pids_pos = 0; //holds the oldest pid in the list
 
   //keeping track of the last 15 commands
-  char* history[MAX_NUM_TRACK];
+  char** history = (char**)malloc(MAX_NUM_TRACK);
+  //initializing each entry in history in memory
+  int i;
+  for(i=0; i<MAX_NUM_TRACK; ++i);
+  {
+      history[0] = (char*)malloc(MAX_COMMAND_SIZE);
+  }
   int history_pos = 0; //holds the oldest command in the history
 
   while(1)
@@ -74,11 +80,8 @@ int main()
     }
     //set all values in the string to NULL in case a shorter string overwrites it later
     memset(&history[history_pos], 0, MAX_COMMAND_SIZE);
-    if(working_str != NULL) //in case the user only presses enter
-    {
-        strncpy(&history[history_pos][0], working_str, MAX_COMMAND_SIZE);
-        history_pos++;
-    }
+    strncpy(&history[history_pos][0], working_str, MAX_COMMAND_SIZE);
+    history_pos++;
 
     // we are going to move the working_str pointer so
     // keep track of its original value so we can deallocate
@@ -162,6 +165,12 @@ int main()
     }
 
     free( working_root );
+    for(i=0; i<MAX_NUM_TRACK; ++i)
+    {
+        free(history[i]);
+    }
+    free(history);
+
   }
   exit(EXIT_SUCCESS);
 }
