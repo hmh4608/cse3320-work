@@ -82,14 +82,14 @@ int main()
     {
         exit(EXIT_SUCCESS);
     }
-    else if(strcmp(arguments[0], "cd")) //command for changing directories
+    else if(strcmp(arguments[0], "cd") == 0) //command for changing directories
     {
         if(!chdir(arguments[1]))
         {
             printf("Invalid directory\n");
         }
     }
-    else if(strcmp(arguments[0], "listpids")) //list out pids of last 15 processes spawned off msh.c
+    else if(strcmp(arguments[0], "listpids") == 0) //list out pids of last 15 processes spawned off msh.c
     {
         int i;
         for(i = 0; i < pids_index; ++i)
@@ -100,14 +100,14 @@ int main()
     else if(arguments[0] != NULL)
     {
         pids[pids_index++] = fork();
+        int status;
+
         //reset the index keeping track of current position we are in the pids[] array to the beginning
         //if we already have 15 pids in the list
         if (pids_index > 14)
         {
             pids_index = 0;
         }
-
-        int status;
 
         if(pids[pids_index] == -1) //failed fork
         {
