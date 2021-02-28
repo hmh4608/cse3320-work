@@ -189,14 +189,7 @@ int main()
         }
     }
 
-    int arg_index  = 0;
-    for( arg_index = 0; arg_index < arg_count; arg_index ++ ) 
-    {
-      printf("arguments[%d] = %s\n", arg_index, arguments[arg_index] );  
-    }
-
     free( working_root );
-
   }
   return 0;
 }
