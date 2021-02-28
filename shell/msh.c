@@ -78,7 +78,7 @@ int main()
             printf("Command not in history.\n");
         }
     }
-    
+
     //reset the current position of the oldest command entered to 0
     //if we have reached the max stored index of history
     if(history_pos > MAX_NUM_TRACK-1)
@@ -87,11 +87,13 @@ int main()
     }
     //set all values in the string to NULL in case a shorter string overwrites it later
     memset(history[history_pos], '\0', MAX_COMMAND_SIZE);
+    printf("%s %d %s %p\n", working_str, history_pos, history[history_pos], history[history_pos]);
     if(strcmp(working_str, "\n") != 0)
     {
         strcpy(history[history_pos], working_str);
         history_pos++;
     }
+    printf("%s %d %s %p\n", working_str, history_pos, history[history_pos-1], history[history_pos-1]);
 
     // we are going to move the working_str pointer so
     // keep track of its original value so we can deallocate
@@ -201,7 +203,7 @@ void printPIDs(pid_t* pids)
 */
 void printHistory(char history[][MAX_COMMAND_SIZE], int history_pos)
 {
-    int pos = history_pos; //storing current position of the oldest command
+    int pos = history_pos-1; //storing current position of the oldest command
     int i;
     for(i = 0; i < MAX_NUM_TRACK; ++i)
     {
