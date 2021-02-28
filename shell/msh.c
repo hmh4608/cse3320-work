@@ -116,7 +116,7 @@ int main()
         }
         else if(strcmp(arguments[0], "history") == 0)
         {
-            printHistory(history);
+            printHistory(history, history_pos);
         }
         else
         {
@@ -184,7 +184,8 @@ void printPIDS(pid_t* pids)
 */
 void printHistory(char** history, int history_pos)
 {
-    int pos = history_pos; //storing current position of the oldest command 
+    int pos = history_pos; //storing current position of the oldest command
+    int i;
     for(i = 0; i < MAX_NUM_TRACK; ++i)
     {
         printf("%d: %s\n", i, history[pos]);
