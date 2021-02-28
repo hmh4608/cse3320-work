@@ -45,7 +45,7 @@ int main()
     // This while command will wait here until the user
     // inputs something since fgets returns NULL when there
     // is no input
-    while( !fgets (cmd_str, MAX_COMMAND_SIZE, stdin) );
+    while( !fgets(cmd_str, MAX_COMMAND_SIZE, stdin) );
 
     /* Parse input */
     char* arguments[MAX_NUM_ARGUMENTS];
