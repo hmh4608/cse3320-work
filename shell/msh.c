@@ -27,7 +27,7 @@
 #define MAX_NUM_TRACK 15 //max number of pids or history of commands to keep track of
 
 //function prototypes
-void printPIDs(pid_t* pids);
+void printPIDs(pid_t* pids, int pids_pos, int count);
 void printHistory(char history[][MAX_COMMAND_SIZE], int history_pos, int count);
 
 int main()
@@ -37,7 +37,8 @@ int main()
   
   //keeping track of the last 15 processes spawned off the shell
   pid_t pids[MAX_NUM_TRACK];
-  int pids_pos = 0; //holds the oldest pid in the list
+  int pids_pos = 0; //holds the oldest pid or next available slot in the pids list
+  int pids_count = 0; //used to see if pids has already been filled up once before
 
   //keeping track of the last 15 commands
   char history[MAX_NUM_TRACK][MAX_COMMAND_SIZE];
@@ -181,6 +182,10 @@ int main()
             //otherwise we are in the parent process
             waitpid(pids[pids_pos], &status, 0); //blocking parent process from doing anything until child process returns
             pids_pos++;
+            if(pids_count < MAX_NUM_TRACK)
+            {
+                pids_count++;
+            }
         }
     }
 
@@ -200,13 +205,27 @@ int main()
 * prints out the list of PIDs of the last 15 processes spawned by msh shell
 * 
 * pids - array of the last 15 processes
+* pids_pos - position of the oldest command in pids or
+*            if pids has not been filled up at least once, it is the next available slot in pids
+* count - used to see if all MAX_NUM_TRACK entries of pids has been filled up
 */
-void printPIDs(pid_t* pids)
+void printPIDs(pid_t* pids, int pids_pos, int count)
 {
-    int i;
-    for(i=0; i<MAX_NUM_TRACK; ++i)
+    if(count < MAX_NUM_TRACK)
     {
-        printf("%d: %d\n", i, pids[i]);
+        pids_pos = 0; //in case we have not filled up pids at least once
+                      //since pids_pos can also be the next available or empty slot in pids
+    }
+    
+    int i;
+    for(i=0; i<count; ++i)
+    {
+        printf("%d: %d\n", i+1, pids[pids_pos]);
+        pids_pos++;
+        if(pids_pos > MAX_NUM_TRACK-1)
+        {
+            pids_pos = 0;
+        }
     }
 }
 
@@ -216,7 +235,7 @@ void printPIDs(pid_t* pids)
 * history - array of previous commands used
 * history_pos - the position of the oldest command in history or
                 if history has not been filled up at least once, it is the next available slot in history
-* count - used to see if all 15 entries of history has been filled up
+* count - used to see if all MAX_NUM_TRACK entries of history has been filled up
 */
 void printHistory(char history[][MAX_COMMAND_SIZE], int history_pos, int count)
 {
@@ -227,7 +246,7 @@ void printHistory(char history[][MAX_COMMAND_SIZE], int history_pos, int count)
     }
 
     int i;
-    for(i = 0; i < count; ++i)
+    for(i=0; i<count; ++i)
     {
         printf("%d: %s\n", i+1, history[history_pos]);
         history_pos++;
