@@ -71,7 +71,7 @@ int main()
     if(working_str[0] == '!')
     {
         int n = atoi(&working_str[1]);
-        strcpy(working_str, history[n]);
+        strcpy(working_str, history[n-1]);
 
         if(strlen(working_str) == 0)
         {
@@ -86,7 +86,11 @@ int main()
         history_pos = 0;
     }
     //set all values in the string to NULL in case a shorter string overwrites it later
-    memset(&history[history_pos], 0, MAX_COMMAND_SIZE);
+    int i;
+    for(i=0; i<MAX_NUM_TRACK; ++i)
+    {
+        memset(history[history_pos], '\0', MAX_COMMAND_SIZE);
+    }
     strcpy(history[history_pos], working_str);
     history_pos++;
 
@@ -118,7 +122,7 @@ int main()
         }
         else if(strcmp(arguments[0], "cd") == 0) //command for changing directories
         {
-            if(!chdir(arguments[1]))
+            if(chdir(arguments[1]) == -1)
             {
                 printf("Invalid directory\n");
             }
