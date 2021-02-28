@@ -101,15 +101,15 @@ int main()
         }
         else
         {
-            pids[pids_index++] = fork();
-            int status;
-
             //reset the index keeping track of current position we are in the pids[] array to the beginning
             //if we already have 15 pids in the list
             if(pids_index > 14)
             {
                 pids_index = 0;
             }
+
+            pids[pids_index] = fork();
+            int status;
 
             if(pids[pids_index] == -1) //failed fork
             {
@@ -128,6 +128,7 @@ int main()
             }
             //otherwise we are in the parent process
             waitpid(pids[pids_index], &status, 0); //blocking parent process from doing anything until child process returns
+            pids_index++;
         }
     }
 
