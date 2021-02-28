@@ -92,8 +92,8 @@ int main()
     //since fgets will not keep any characters in positions >= MAX_COMMAND_SIZE
     //strcspn will return the number of characters until the first occurrence of \n
     //if no \n are present, the length of the string is returned
-    int pos = strcspn(working_str, '\n')-1; //position of the first occurrence of \n
-    if( != strlen(working_str))
+    int pos = strcspn(working_str, "\n")-1; //position of the first occurrence of \n
+    if(pos != strlen(working_str)-1)
     {
         working_str[pos] = '\0';
     }
