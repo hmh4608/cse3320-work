@@ -45,7 +45,7 @@ int main()
   int i;
   for(i=0; i<MAX_NUM_TRACK; ++i)
   {
-      history[i] = (char*)malloc(sizeof(char) * MAX_COMMAND_SIZE);
+      *(history+i) = (char*)malloc(sizeof(char) * MAX_COMMAND_SIZE);
   }
   int history_pos = 0; //holds the oldest command in the history
 
