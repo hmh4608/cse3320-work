@@ -24,7 +24,11 @@
 
 #define MAX_NUM_ARGUMENTS 10     // Mav shell only supports ten arguments
 
-#define MAX_NUM_PIDS 15 //max number of pids to keep track of
+#define MAX_NUM_TRACK 15 //max number of pids or history of commands to keep track of
+
+//function prototypes
+void printPIDs(pid_t* pids);
+void printHistory(char** history, int history_pos);
 
 int main()
 {
@@ -32,10 +36,14 @@ int main()
   char* cmd_str = (char*) malloc( MAX_COMMAND_SIZE );
 
   //keeping track of the last 15 processes spawned off the shell
-  pid_t pids[MAX_NUM_PIDS];
-  int pids_index = 0;
+  pid_t pids[MAX_NUM_TRACK];
+  int pids_pos = 0; //holds the oldest pid in the list
 
-  while( 1 )
+  //keeping track of the last 15 commands
+  char* history[MAX_NUM_TRACK];
+  int history_pos = 0; //holds the oldest command in the history
+
+  while(1)
   {
     // Print out the msh prompt
     printf ("msh> ");
@@ -56,7 +64,18 @@ int main()
     // parsed by strsep
     char* argument_ptr;                                         
                                                            
-    char* working_str  = strdup( cmd_str );                
+    char* working_str  = strdup( cmd_str );        
+    
+    //reset the current position of the oldest command entered to 0
+    //if we have reached the max stored index of history
+    if(history_pos > MAX_NUM_TRACK - 1)
+    {
+        history_pos = 0;
+    }
+    //set all values in the string to NULL in case a shorter string overwrites it later
+    memset(&history[history_pos], 0, MAX_COMMAND_SIZE);
+    strncpy(&history[history_pos], working_str, MAX_COMMAND_SIZE);
+    history_pos++;
 
     // we are going to move the working_str pointer so
     // keep track of its original value so we can deallocate
@@ -93,31 +112,32 @@ int main()
         }
         else if(strcmp(arguments[0], "listpids") == 0) //list out pids of last 15 processes spawned off msh.c
         {
-            int i;
-            for(i = 0; i < pids_index; ++i)
-            {
-                printf("%d: %d\n", i, pids[i]);
-            }
+            printPIDs(pids);
+        }
+        else if(strcmp(arguments[0], "history") == 0)
+        {
+            printHistory(history);
         }
         else
         {
             //reset the index keeping track of current position we are in the pids[] array to the beginning
             //if we already have 15 pids in the list
-            if(pids_index > 14)
+            if(pids_pos > MAX_NUM_TRACK-1)
             {
-                pids_index = 0;
+                pids_pos = 0;
             }
 
-            pids[pids_index] = fork();
+            pids[pids_pos] = fork();
             int status;
 
-            if(pids[pids_index] == -1) //failed fork
+            if(pids[pids_pos] == -1) //failed fork
             {
                 perror("Fork failed: ");
                 exit(EXIT_FAILURE);
             }
-            else if(pids[pids_index] == 0) //if we are in the child process
+            else if(pids[pids_pos] == 0) //if we are in the child process
             {
+                //execvp uses the file name of the command and vector/list of command options as the parameters
                 int ret = execvp(arguments[0], arguments);
 
                 if(ret == -1) //if the execvp failed
@@ -127,8 +147,8 @@ int main()
                 }
             }
             //otherwise we are in the parent process
-            waitpid(pids[pids_index], &status, 0); //blocking parent process from doing anything until child process returns
-            pids_index++;
+            waitpid(pids[pids_pos], &status, 0); //blocking parent process from doing anything until child process returns
+            pids_pos++;
         }
     }
 
@@ -141,4 +161,37 @@ int main()
     free( working_root );
   }
   return 0;
+}
+
+/*
+* prints out the list of PIDs of the last 15 processes spawned by msh shell
+* 
+* pids - array of the last 15 processes
+*/
+void printPIDS(pid_t* pids)
+{
+    int i;
+    for(i=0; i<MAX_NUM_TRACK; ++i)
+    {
+        printf("%d: %d\n", i, pids[i]);
+    }
+}
+
+/*
+* prints out the list of the last 15 commands used
+* 
+* history - array of previous commands used 
+*/
+void printHistory(char** history, int history_pos)
+{
+    int pos = history_pos; //storing current position of the oldest command 
+    for(i = 0; i < MAX_NUM_TRACK; ++i)
+    {
+        printf("%d: %s\n", i, history[pos]);
+        
+        if(pos > MAX_NUM_TRACK - 1)
+        {
+            pos = 0;
+        }
+    }
 }
