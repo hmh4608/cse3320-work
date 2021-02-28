@@ -78,54 +78,57 @@ int main()
     //execute a process depending on the inputs user has given
     //arguments[0] is the command to execute a process
     //arguments[1...n] is all the command options to the command arguments[0]
-    if(strcmp(arguments[0], "exit") == 0 || strcmp(arguments[0], "quit") == 0)
+    if(arguments[0] != NULL)
     {
-        exit(EXIT_SUCCESS);
-    }
-    else if(strcmp(arguments[0], "cd") == 0) //command for changing directories
-    {
-        if(!chdir(arguments[1]))
+        if(strcmp(arguments[0], "exit") == 0 || strcmp(arguments[0], "quit") == 0)
         {
-            printf("Invalid directory\n");
+            exit(EXIT_SUCCESS);
         }
-    }
-    else if(strcmp(arguments[0], "listpids") == 0) //list out pids of last 15 processes spawned off msh.c
-    {
-        int i;
-        for(i = 0; i < pids_index; ++i)
+        else if(strcmp(arguments[0], "cd") == 0) //command for changing directories
         {
-            printf("%d: %d\n", i, pids[i]);
-        }
-    }
-    else if(arguments[0] != NULL)
-    {
-        pids[pids_index++] = fork();
-        int status;
-
-        //reset the index keeping track of current position we are in the pids[] array to the beginning
-        //if we already have 15 pids in the list
-        if (pids_index > 14)
-        {
-            pids_index = 0;
-        }
-
-        if(pids[pids_index] == -1) //failed fork
-        {
-            perror("Fork failed: ");
-            exit(EXIT_FAILURE);
-        }
-        else if(pids[pids_index] == 0) //if we are in the child process
-        {
-            int ret = execvp(arguments[0], arguments);
-
-            if(ret == -1) //if the execvp failed
+            if(!chdir(arguments[1]))
             {
-                printf("%s: Command not found\n", arguments[0]);
-                exit(EXIT_FAILURE);
+                printf("Invalid directory\n");
             }
         }
-        //otherwise we are in the parent process
-        waitpid(pids[pids_index], &status, 0); //blocking parent process from doing anything until child process returns
+        else if(strcmp(arguments[0], "listpids") == 0) //list out pids of last 15 processes spawned off msh.c
+        {
+            int i;
+            for(i = 0; i < pids_index; ++i)
+            {
+                printf("%d: %d\n", i, pids[i]);
+            }
+        }
+        else
+        {
+            pids[pids_index++] = fork();
+            int status;
+
+            //reset the index keeping track of current position we are in the pids[] array to the beginning
+            //if we already have 15 pids in the list
+            if(pids_index > 14)
+            {
+                pids_index = 0;
+            }
+
+            if(pids[pids_index] == -1) //failed fork
+            {
+                perror("Fork failed: ");
+                exit(EXIT_FAILURE);
+            }
+            else if(pids[pids_index] == 0) //if we are in the child process
+            {
+                int ret = execvp(arguments[0], arguments);
+
+                if(ret == -1) //if the execvp failed
+                {
+                    printf("%s: Command not found\n", arguments[0]);
+                    exit(EXIT_FAILURE);
+                }
+            }
+            //otherwise we are in the parent process
+            waitpid(pids[pids_index], &status, 0); //blocking parent process from doing anything until child process returns
+        }
     }
 
     int arg_index  = 0;
