@@ -124,7 +124,7 @@ int main()
       {
         arguments[arg_count] = NULL;
       }
-      arg_count++;
+      arg_count++; 
     }
 
     //execute a process depending on the inputs user has given
