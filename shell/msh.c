@@ -41,7 +41,7 @@ int main()
 
   //keeping track of the last 15 commands
   char history[MAX_NUM_TRACK][MAX_COMMAND_SIZE];
-  int history_pos = 0; //holds the oldest command in the history
+  int history_pos = 0; //holds the oldest command or next available slot in the history
 
   while(1)
   {
@@ -203,14 +203,11 @@ void printPIDs(pid_t* pids)
 */
 void printHistory(char history[][MAX_COMMAND_SIZE], int history_pos)
 {
-    int pos = history_pos-1; //storing current position of the oldest command
+    int pos = history_pos-1; //storing current position of the oldest command or next available slot in history
     int i;
     for(i = 0; i < MAX_NUM_TRACK; ++i)
     {
-        if(history[pos] != NULL)
-        {
-            printf("%d: %s\n", i+1, history[pos]);
-        }
+        printf("%d: %s\n", i+1, history[pos]);
         pos++;
         if(pos > MAX_NUM_TRACK-1)
         {
