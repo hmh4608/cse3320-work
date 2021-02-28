@@ -189,7 +189,7 @@ int main()
         }
     }
 
-    free( working_root );
+    free(working_root);
   }
   return 0;
 }
