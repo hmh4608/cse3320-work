@@ -203,7 +203,7 @@ void printHistory(char** history, int history_pos)
     int i;
     for(i = 0; i < MAX_NUM_TRACK; ++i)
     {
-        if(history_pos[pos] != NULL)
+        if(history[pos] != NULL)
         {
             printf("%d: %s\n", i, history[pos]);
         }
