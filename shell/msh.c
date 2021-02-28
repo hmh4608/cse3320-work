@@ -137,7 +137,7 @@ int main()
         }
         else if(strcmp(arguments[0], "history") == 0) //list out last 15 commands entered
         {
-            printHistory(history, history_pos);
+            printHistory(history, history_pos, history_count);
         }
         else
         {
