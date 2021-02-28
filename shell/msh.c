@@ -61,7 +61,7 @@ int main()
     // is no input
     while( !fgets(cmd_str, MAX_COMMAND_SIZE, stdin) );
 
-    /* Parse input */
+    //Parse input
     char* arguments[MAX_NUM_ARGUMENTS];
 
     int   arg_count = 0;                                 
@@ -80,7 +80,7 @@ int main()
     }
     //set all values in the string to NULL in case a shorter string overwrites it later
     memset(&history[history_pos], 0, MAX_COMMAND_SIZE);
-    strncpy(&history[history_pos][0], working_str, MAX_COMMAND_SIZE);
+    strcpy(&history[history_pos][0], working_str);
     history_pos++;
 
     // we are going to move the working_str pointer so
