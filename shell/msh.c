@@ -170,7 +170,7 @@ int main()
     free( working_root );
     for(i=0; i<MAX_NUM_TRACK; ++i)
     {
-        free(history[i]);
+        free(*(history+i));
     }
     free(history);
 
@@ -203,7 +203,10 @@ void printHistory(char** history, int history_pos)
     int i;
     for(i = 0; i < MAX_NUM_TRACK; ++i)
     {
-        printf("%d: %s\n", i, history[pos]);
+        if(history_pos[pos] != NULL)
+        {
+            printf("%d: %s\n", i, history[pos]);
+        }
         
         if(pos > MAX_NUM_TRACK-1)
         {
