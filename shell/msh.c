@@ -73,13 +73,23 @@ int main()
     if(working_str[0] == '!')
     {
         int n = atoi(&working_str[1]);
-        strcpy(working_str, history[n-1]);
 
-        printf("%d %s %s %s", n, history[n-1], history[n], working_str);
-
-        if(strlen(working_str) == 0)
+        if(n > history_count || n < 1)
         {
             printf("Command not in history.\n");
+        }
+        else
+        {
+            //since what is displayed to the user isn't the actual index
+            //on the array, we have to offset based on
+            //the current oldest command
+            int index = history_pos+n-1;
+
+            if(index > MAX_NUM_TRACK-1)
+            {
+                index -= MAX_NUM_TRACK;
+            }
+            strcpy(working_str, history[index]);
         }
     }
 
@@ -206,7 +216,7 @@ int main()
 */
 void printPIDs(pid_t* pids, int pids_pos, int count)
 {
-    if(count < MAX_NUM_TRACK)
+    if(count > MAX_NUM_TRACK-1)
     {
         pids_pos = 0; //in case we have not filled up pids at least once
                       //since pids_pos can also be the next available or empty slot in pids
@@ -234,7 +244,7 @@ void printPIDs(pid_t* pids, int pids_pos, int count)
 */
 void printHistory(char history[][MAX_COMMAND_SIZE], int history_pos, int count)
 {
-    if(count < MAX_NUM_TRACK)
+    if(count > MAX_NUM_TRACK-1)
     {
         history_pos = 0; //in the case that we have not filled up history at least once
                          //since history_pos can be the next available slot in history
