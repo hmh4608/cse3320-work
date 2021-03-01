@@ -77,6 +77,7 @@ int main()
         if(n > history_count || n < 1)
         {
             printf("Command not in history.\n");
+            strcpy(working_str, "history\n");
         }
         else
         {
