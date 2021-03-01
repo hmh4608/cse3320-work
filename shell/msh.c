@@ -216,7 +216,7 @@ int main()
 */
 void printPIDs(pid_t* pids, int pids_pos, int count)
 {
-    if(count <= MAX_NUM_TRACK)
+    if(count < MAX_NUM_TRACK)
     {
         pids_pos = 0; //in case we have not filled up pids at least once
                       //since pids_pos can also be the next available or empty slot in pids
@@ -225,12 +225,12 @@ void printPIDs(pid_t* pids, int pids_pos, int count)
     int i;
     for(i=0; i<count; ++i)
     {
-        printf("%d: %d\n", i+1, pids[pids_pos]);
-        pids_pos++;
         if(pids_pos > MAX_NUM_TRACK-1)
         {
             pids_pos = 0;
         }
+        printf("%d: %d\n", i+1, pids[pids_pos]);
+        pids_pos++;
     }
 }
 
@@ -244,7 +244,7 @@ void printPIDs(pid_t* pids, int pids_pos, int count)
 */
 void printHistory(char history[][MAX_COMMAND_SIZE], int history_pos, int count)
 {
-    if(count <= MAX_NUM_TRACK)
+    if(count < MAX_NUM_TRACK)
     {
         history_pos = 0; //in the case that we have not filled up history at least once
                          //since history_pos can be the next available slot in history
@@ -253,11 +253,11 @@ void printHistory(char history[][MAX_COMMAND_SIZE], int history_pos, int count)
     int i;
     for(i=0; i<count; ++i)
     {
-        printf("%d: %s\n", i+1, history[history_pos]);
-        history_pos++;
         if(history_pos > MAX_NUM_TRACK-1)
         {
             history_pos = 0;
         }
+        printf("%d: %s\n", i+1, history[history_pos]);
+        history_pos++;
     }
 }
