@@ -82,8 +82,8 @@ int main()
         else if(history_count > MAX_NUM_TRACK-1)
         {
             //since what is displayed to the user isn't the actual index
-            //on the array, we have to offset based on
-            //the current oldest command
+            //on the array and history list has been filled before
+            //we have to offset based on the current oldest command
             int index = history_pos+n-1;
 
             if(index > MAX_NUM_TRACK-1)
@@ -94,6 +94,9 @@ int main()
         }
         else
         {
+            //for if history list has not already been filled up at least once before
+            //so what is currently displayed as the history list to the user
+            //aligns with the actual history array
             strcpy(working_str, history[n-1]);
         }
     }
