@@ -79,7 +79,7 @@ int main()
             printf("Command not in history.\n");
             strcpy(working_str, "history\n");
         }
-        else
+        else if(history_count > MAX_NUM_TRACK-1)
         {
             //since what is displayed to the user isn't the actual index
             //on the array, we have to offset based on
@@ -91,6 +91,10 @@ int main()
                 index -= MAX_NUM_TRACK;
             }
             strcpy(working_str, history[index]);
+        }
+        else
+        {
+            strcpy(working_str, history[n-1]);
         }
     }
 
