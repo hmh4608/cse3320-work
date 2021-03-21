@@ -83,6 +83,8 @@ void num_substring ( void* param )
     //move to the first position of the current partition we are trying to find substring s2 in
     char* localStr = s1+startPos;
     
+    printf("Thread %d working in num_substring\n", *currentThread);
+    
     for (i = 0; i <= (partition-n2); i++)
     {
         count = 0;
@@ -154,7 +156,7 @@ int main(int argc, char *argv[])
 
 
     gettimeofday(&start, NULL);
-	solve_threaded();
+    solve_threaded();
     gettimeofday(&end, NULL);
 
     secs  = end.tv_sec  - start.tv_sec;
