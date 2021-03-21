@@ -152,12 +152,13 @@ int main(int argc, char *argv[])
 	
     struct timeval start, end;
     float mtime; 
-    int secs, usecs;    
+    int secs, usecs;
 
-
+	pthread_mutex_init(&mutex, NULL);
     gettimeofday(&start, NULL);
     solve_threaded();
     gettimeofday(&end, NULL);
+	pthread_mutex_destroy(&mutex);
 
     secs  = end.tv_sec  - start.tv_sec;
     usecs = end.tv_usec - start.tv_usec;
