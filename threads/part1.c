@@ -72,7 +72,7 @@ int readf(char* filename)
 *calculates the number of substrings s2 in string s1 from the .txt file
 *returns the total number of substrings s2 for the local partition of the s1 string of the current thread 
 */
-void num_substring ( void* param )
+void* num_substring ( void* param )
 {
     int i,j,k;
     int count ;
@@ -82,8 +82,6 @@ void num_substring ( void* param )
     
     //move to the first position of the current partition we are trying to find substring s2 in
     char* localStr = s1+startPos;
-    
-    printf("Thread %d working in num_substring\n", *currentThread);
     
     for (i = 0; i <= (partition-n2); i++)
     {
@@ -100,6 +98,7 @@ void num_substring ( void* param )
             }
             if (count==n2)
             {
+            	//lock critical region since we're editing a global variable
             	pthread_mutex_lock(&mutex);
                 total++; /*found a substring in this step*/
                 pthread_mutex_unlock(&mutex);
@@ -114,14 +113,13 @@ void num_substring ( void* param )
 void solve_threaded()
 {
 	pthread_t threads[NUM_THREADS];
-	int* thread_num = malloc(sizeof(int*)*NUM_THREADS); //identifies which thread in the sequence we launched them to use as an argument to thread creation later
+	int thread_num[NUM_THREADS]; //identifies which thread in the sequence we launched them to use as an argument to thread creation later
 	int i;
 	//create and launch all the threads
 	for(i=0; i<NUM_THREADS; ++i)
 	{
 		thread_num[i] = i;
-		threads[i] = pthread_create(&(threads[i]), NULL, (void*)&num_substring, (void*)&thread_num[i]);
-		if(threads[i])
+		if(pthread_create(&(threads[i]), NULL, num_substring, (void*)&thread_num[i]))
 		{
 			printf("ERROR: Thread creation failed\n");
 			exit(EXIT_FAILURE);
@@ -137,8 +135,6 @@ void solve_threaded()
 			exit(EXIT_FAILURE);
 		}
 	}
-	
-	free(thread_num);
 }
  
 int main(int argc, char *argv[])
