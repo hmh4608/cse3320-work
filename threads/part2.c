@@ -1,30 +1,9 @@
-// The MIT License (MIT)
-//
-// Copyright (c) 2020 Trevor Bakker
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
-//
-//
-// Purpose: Demonstrate the use of semaphore with a producer / consumers problem.
-// In this example there are a number of cashiers to checkout customers.  A customer
-// producer will create a random number of customers from 0 to 10 and add them to the 
-// line. Cashier threads will check out the customers as they are available.
+/*
+*	Hoang Ho
+*	ID 1001654608
+*	CSE 3320-003
+*	Due 03/28/2021 11:59 PM
+*/
 
 #include <assert.h>
 #include <pthread.h>
@@ -32,7 +11,11 @@
 #include <semaphore.h>
 
 #define INITIAL_CUSTOMERS 1
-#define NUM_CASHIERS 15
+
+#ifndef NUM_THREADS
+#define NUM_THREADS 4
+#endif
+
 #define NONSHARED 1
 
 sem_t customer_checked_out, customers_in_line;    

@@ -2,7 +2,7 @@
 *	Hoang Ho
 *	ID 1001654608
 *	CSE 3320-003
-*	Due 03/24/2021 5:30 PM
+*	Due 03/28/2021 11:59 PM
 */
 
 #include <stdlib.h>
@@ -13,11 +13,14 @@
 
 #define MAX 5000000
 
+#ifndef NUM_THREADS
+#define NUM_THREADS 4
+#endif
+
 int total = 0;
 int n1,n2; 
 char *s1,*s2;
 pthread_mutex_t mutex; //to guard the critical areas
-int NUM_THREADS = 4;
 int partition;
 
 FILE *fp;
