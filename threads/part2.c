@@ -8,97 +8,102 @@
 #include <assert.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <semaphore.h>
 
-#define INITIAL_CUSTOMERS 1
-
-#ifndef NUM_THREADS
-#define NUM_THREADS 4
-#endif
-
+#define MAX 5000000
 #define NONSHARED 1
+#define QUEUE_SIZE 5
 
-sem_t customer_checked_out, customers_in_line;    
-int customers_waiting = INITIAL_CUSTOMERS ;            
+sem_t consumerSem, producerSem;        
+int prodQueuePos, consQueuePos = 0; //position of the next oldest or available slot for a character to be read in or write to
+char queue[QUEUE_SIZE];
 
-void * CustomerProducer( void * arg ) 
+void* consume(void* arg) 
 {
-  printf( "CustomerProducer created\n" );
+  	printf("Consumer created\n");
 
-  while( 1 )
-  {
-    // Only produce a new customer if we check out an exiting customer
-    sem_wait( &customer_checked_out );
+  	while(1)
+  	{
+    	//read in more characters
+    	sem_wait(&producerSem);
+		
+		if(consQueuePos > QUEUE_SIZE)
+		{
+			consQueuePos = 0;
+		}
+		//sequentially read from the queue and prints the character in the same order they are written
+		printf("%c", queue[consQueuePos]);
+		consQueuePos++;	
+		
+    	//tell producer to write more characters into the queue
+    	sem_post(&consumerSem);
 
-    int new_customers = rand( ) % 10; 
-    customers_waiting += new_customers; 
-
-    printf( "Adding %d customers to the line\n", new_customers ); 
-    printf( "%d customer waiting in line\n", customers_waiting );
-
-    // Notify the cashiers that we've added a new customer to the lineA
-    int i;
-    for( i = 0; i < new_customers; i++ )
-    {
-      sem_post( &customers_in_line );
-    }
-
-    // Sleep a little bit so we can read the output on the screen
-    sleep( 2 );
-
+    	// Sleep a little bit so we can read the output on the screen
+    	sleep(2);
   }
 }
 
-void * Cashier( void * arg ) 
+void* produce(void* arg) 
 {
+  	printf( "Producer created\n" );
+  	
+  	char* filename = (char*)arg;
+	FILE* txtFile;
+	
+	if((txtFile=fopen(filename, "r"))==NULL)
+    {
+        printf("ERROR: can’t open %s!\n", filename);
+        exit(EXIT_FAILURE);
+    }
 
-  printf( "Cashier created\n" );
+	char currentChar;
 
-  while( 1 )
-  {
-    // Wait here for a customer to appear in line
-    sem_wait( &customers_in_line );
+  	while(1)
+  	{
+    	//wait until the consumer is ready to read in more characters
+    	sem_wait(&consumerSem);
+    	if(prodQueuePos > QUEUE_SIZE)
+    	{
+    		prodQueuePos = 0;
+		}
+    	
+    	if((currentChar = fgetc(txtFile)) != EOF)
+    	{
+    		queue[prodQueuePos] = currentChar;
+		}
+		
+		//update the position within the queue for next character to read in
+    	prodQueuePos++;
+    	sem_post(&producerSem);
 
-    customers_waiting --;
-
-    // Check to make sure we haven't reduced the customer count
-    // to below 0.  If we have then crash
-    assert( customers_waiting >= 0 );
-
-    printf( "Checking out customer. %d customers left in line\n", customers_waiting );
-
-    sem_post( &customer_checked_out );
-
-    // Sleep a little bit so we can read the output on the screen
-    sleep( 1 );
-  }
-
+    	// Sleep a little bit so we can read the output on the screen
+    	sleep(1);
+  	}
+  	
+  	fclose(txtFile);
 }
 
 int main( int argc, char *argv[] ) 
 {
-  time_t t;
+  	if(argc < 2)
+    {
+      printf("Error: You must pass in the datafile as a commandline parameter\n");
+    }
+  
+  	time_t t;
 
-  srand( ( unsigned int ) time( & t ) );
+  	srand((unsigned int)time(&t));
 
-  pthread_t producer_tid;  
-  pthread_t cashier_tid [ NUM_CASHIERS ];  
+  	pthread_t producer;  
+  	pthread_t consumer;
 
-  sem_init( & customer_checked_out, NONSHARED, 0 );  
-  sem_init( & customers_in_line,    NONSHARED, INITIAL_CUSTOMERS );   
+  	sem_init(&consumerSem, NONSHARED, 1); //set as 1 since consumer is ready to read from the queue at the beginning
+  	sem_init(&producerSem, NONSHARED, 0);
 
-  pthread_create( & producer_tid, NULL, CustomerProducer, NULL );
+  	pthread_create(&producer, NULL, produce, (void*)&argv[1]);
+  	pthread_create(&consumer, NULL, consume, NULL);
 
-  int i;
-  for( i = 0; i < NUM_CASHIERS; i++ )
-  {
-    pthread_create( & cashier_tid[i], NULL, Cashier, NULL );
-  }
-
-  pthread_join( producer_tid, NULL );
-  for( i = 0; i < NUM_CASHIERS; i++ )
-  {
-    pthread_join( cashier_tid[i], NULL );
-  }
-
+  	pthread_join(producer, NULL);
+  	pthread_join(consumer, NULL);
 }
