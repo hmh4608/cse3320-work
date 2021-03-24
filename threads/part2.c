@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <semaphore.h>
+#include <string.h>
+
 
 #define MAX 5000000
 #define NONSHARED 1
@@ -18,6 +20,7 @@
 sem_t consumerSem, producerSem;        
 int prodQueuePos, consQueuePos = 0; //position of the next oldest or available slot for a character to be read in or write to
 char queue[QUEUE_SIZE];
+int done = 0; //marked by the producer to tell the consumer all characters have been read in, 
 
 void* consume(void* arg) 
 {
@@ -25,22 +28,34 @@ void* consume(void* arg)
 
   	while(1)
   	{
-    	//read in more characters
-    	sem_wait(&producerSem);
+    	if(!done) //only wait for producer to write more to the queue if there is still more to be written from the txt file
+    	{
+    		//read in more characters once producer has posted/signaled that it has written more
+    		sem_wait(&producerSem);
+    	}
 		
 		if(consQueuePos > QUEUE_SIZE)
 		{
-			consQueuePos = 0;
+			consQueuePos = 0;	
 		}
-		//sequentially read from the queue and prints the character in the same order they are written
-		printf("%c", queue[consQueuePos]);
-		consQueuePos++;	
+		
+		//finished printing all of the characters in the loop and no more is being written, so leave the function
+		if(prodQueuePos == consQueuePos && done) 
+		{			
+			break;
+		}
+		else
+		{
+			//sequentially read from the queue and prints the character in the same order they are written
+			printf("%c\n", queue[consQueuePos]);
+			consQueuePos++;	
+		}
 		
     	//tell producer to write more characters into the queue
     	sem_post(&consumerSem);
 
     	// Sleep a little bit so we can read the output on the screen
-    	sleep(2);
+    	sleep(1);
   }
 }
 
@@ -49,8 +64,8 @@ void* produce(void* arg)
   	printf( "Producer created\n" );
   	
   	char* filename = (char*)arg;
-	FILE* txtFile;
-	
+  	FILE* txtFile;
+
 	if((txtFile=fopen(filename, "r"))==NULL)
     {
         printf("ERROR: can’t open %s!\n", filename);
@@ -71,16 +86,20 @@ void* produce(void* arg)
     	if((currentChar = fgetc(txtFile)) != EOF)
     	{
     		queue[prodQueuePos] = currentChar;
+    		//update the position within the queue for next character to read in
+    		prodQueuePos++;
+		}
+		//tell the consumer it can now read from the queue when something is written to it
+		sem_post(&producerSem);
+		
+		//tell the consumer that the producer has read in all characters from the message, so print the rest that has not been printed and stop
+		if(currentChar == EOF)
+		{
+			done = 1;
+			break;
 		}
 		
-		//update the position within the queue for next character to read in
-    	prodQueuePos++;
-    	sem_post(&producerSem);
-
-    	// Sleep a little bit so we can read the output on the screen
-    	sleep(1);
   	}
-  	
   	fclose(txtFile);
 }
 
@@ -101,7 +120,7 @@ int main( int argc, char *argv[] )
   	sem_init(&consumerSem, NONSHARED, 1); //set as 1 since consumer is ready to read from the queue at the beginning
   	sem_init(&producerSem, NONSHARED, 0);
 
-  	pthread_create(&producer, NULL, produce, (void*)&argv[1]);
+  	pthread_create(&producer, NULL, produce, (void*)argv[1]);
   	pthread_create(&consumer, NULL, consume, NULL);
 
   	pthread_join(producer, NULL);
