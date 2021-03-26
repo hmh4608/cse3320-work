@@ -7,15 +7,12 @@
 *	Compilation: gcc part2.c -o part2 -lpthread
 */
 
-#include <assert.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <semaphore.h>
 #include <string.h>
 
-
-#define MAX 5000000
 #define NONSHARED 1
 #define QUEUE_SIZE 5
 
@@ -76,10 +73,10 @@ void* produce(void* arg)
   	FILE* txtFile;
 
 	if((txtFile=fopen(filename, "r"))==NULL)
-    {
-        printf("ERROR: can’t open %s!\n", filename);
-        exit(EXIT_FAILURE);
-    }
+	{
+		printf("ERROR: can’t open %s!\n", filename);
+		exit(EXIT_FAILURE);
+	}
 
 	char currentChar;
 
@@ -112,23 +109,21 @@ void* produce(void* arg)
   	fclose(txtFile);
 }
 
-int main( int argc, char *argv[] ) 
+int main( int argc, char *argv[] )
 {
-  	if(argc < 2)
+	if(argc < 2)
     {
       printf("Error: You must pass in the datafile as a commandline parameter\n");
     }
-  
-  	time_t t;
-
-  	srand((unsigned int)time(&t));
 
   	pthread_t producer;  
   	pthread_t consumer;
 
+	//semaphores for the producer and consumer to communicate with each other
   	sem_init(&consumerSem, NONSHARED, 1); //set as 1 since consumer is ready to read from the queue at the beginning
   	sem_init(&producerSem, NONSHARED, 0);
 
+	//create producer and consumer threads
   	pthread_create(&producer, NULL, produce, (void*)argv[1]);
   	pthread_create(&consumer, NULL, consume, NULL);
 
