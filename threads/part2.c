@@ -3,6 +3,8 @@
 *	ID 1001654608
 *	CSE 3320-003
 *	Due 03/28/2021 11:59 PM
+*
+*	Compilation: gcc part2.c -o part2 -lpthread
 */
 
 #include <assert.h>
@@ -22,6 +24,9 @@ int prodQueuePos, consQueuePos = 0; //position of the next oldest or available s
 char queue[QUEUE_SIZE];
 int done = 0; //marked by the producer to tell the consumer all characters have been read in, 
 
+/*
+*consumer thread reads from the queue[5] one by one as it is written by the producer to the queue
+*/
 void* consume(void* arg) 
 {
   	printf("Consumer created\n");
@@ -59,6 +64,10 @@ void* consume(void* arg)
   }
 }
 
+/*
+*producer thread writes to the queue[5] one by one
+*arg - provided file name (should be message.txt)
+*/
 void* produce(void* arg) 
 {
   	printf( "Producer created\n" );
