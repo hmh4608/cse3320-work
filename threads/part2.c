@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <semaphore.h>
 #include <string.h>
 
@@ -30,17 +31,17 @@ void* consume(void* arg)
 
   	while(1)
   	{
-    	if(!done) //only wait for producer to write more to the queue if there is still more to be written from the txt file
-    	{
-    		//read in more characters once producer has posted/signaled that it has written more
-    		sem_wait(&producerSem);
-    	}
-		
+	    	if(!done) //only wait for producer to write more to the queue if there is still more to be written from the txt file
+	    	{
+	    		//read in more characters once producer has posted/signaled that it has written more
+	    		sem_wait(&producerSem);
+	    	}
+			
 		if(consQueuePos > QUEUE_SIZE)
 		{
 			consQueuePos = 0;	
 		}
-		
+			
 		//finished printing all of the characters in the loop and no more is being written, so leave the function
 		if(prodQueuePos == consQueuePos && done) 
 		{			
@@ -50,15 +51,15 @@ void* consume(void* arg)
 		{
 			//sequentially read from the queue and prints the character in the same order they are written
 			printf("%c\n", queue[consQueuePos]);
-			consQueuePos++;	
+			consQueuePos++;
 		}
-		
-    	//tell producer to write more characters into the queue
-    	sem_post(&consumerSem);
+			
+	    	//tell producer to write more characters into the queue
+	    	sem_post(&consumerSem);
 
-    	// Sleep a little bit so we can read the output on the screen
-    	sleep(1);
-  }
+	    	// Sleep a little bit so we can read the output on the screen
+	    	sleep(1);
+  	}
 }
 
 /*
@@ -82,39 +83,39 @@ void* produce(void* arg)
 
   	while(1)
   	{
-    	//wait until the consumer is ready to read in more characters
-    	sem_wait(&consumerSem);
-    	if(prodQueuePos > QUEUE_SIZE)
-    	{
-    		prodQueuePos = 0;
+	    	//wait until the consumer is ready to read in more characters
+	    	sem_wait(&consumerSem);
+	    	if(prodQueuePos > QUEUE_SIZE)
+	    	{
+	    		prodQueuePos = 0;
 		}
-    	
-    	if((currentChar = fgetc(txtFile)) != EOF)
-    	{
-    		queue[prodQueuePos] = currentChar;
-    		//update the position within the queue for next character to read in
-    		prodQueuePos++;
+	    	
+	    	if((currentChar = fgetc(txtFile)) != EOF)
+	    	{
+		    	queue[prodQueuePos] = currentChar;
+		    	//update the position within the queue for next character to read in
+		    	prodQueuePos++;
 		}
 		//tell the consumer it can now read from the queue when something is written to it
 		sem_post(&producerSem);
-		
+				
 		//tell the consumer that the producer has read in all characters from the message, so print the rest that has not been printed and stop
 		if(currentChar == EOF)
 		{
 			done = 1;
 			break;
 		}
-		
-  	}
+	}
+	
   	fclose(txtFile);
 }
 
 int main( int argc, char *argv[] )
 {
 	if(argc < 2)
-    {
-      printf("Error: You must pass in the datafile as a commandline parameter\n");
-    }
+    	{
+      		printf("Error: You must pass in the datafile as a commandline parameter\n");
+    	}
 
   	pthread_t producer;  
   	pthread_t consumer;
