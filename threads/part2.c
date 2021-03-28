@@ -56,9 +56,6 @@ void* consume(void* arg)
 			
 	    	//tell producer to write more characters into the queue
 	    	sem_post(&consumerSem);
-
-	    	// Sleep a little bit so we can read the output on the screen
-	    	sleep(1);
   	}
 }
 
