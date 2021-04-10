@@ -60,7 +60,7 @@ struct _block
 
 
 struct _block *heapList = NULL; /* Free list to track the _blocks available */
-struct _block *last_alloc = NULL; //keeping track of the 
+struct _block *last_alloc = NULL; //keeping track of the last block reuse for the next fit algorithm
 
 /*
  * \brief findFreeBlock
@@ -80,6 +80,8 @@ struct _block *findFreeBlock(struct _block **last, size_t size)
 
 #if defined FIT && FIT == 0
    /* First fit */
+   //chooses the first block that can fit the size requested
+   
    while (curr && !(curr->free && curr->size >= size)) 
    {
       *last = curr;
@@ -88,7 +90,10 @@ struct _block *findFreeBlock(struct _block **last, size_t size)
 #endif
 
 #if defined BEST && BEST == 0
-   struct _block *win_block = NULL;
+   /*best fit goes through the entire heap list and chooses
+    *the block with the block with the least remaining space after
+    *using the requested size*/
+   struct _block *chosen = NULL;
    size_t difference = INT_MAX;
    
    while(curr)
@@ -96,23 +101,28 @@ struct _block *findFreeBlock(struct _block **last, size_t size)
       //makes sure block is free and large enough to allocate
       if(curr->free && size <= (curr->size))
       {
-         //sees if difference is smaller than the previous difference
-         //to find the best fit
+         /*sees if difference is smaller than the previous difference
+          *to find the best fit*/
          if( ((curr->size) - size) < difference )
          {
             difference = (curr->size) - size;
-            win_block = curr;
+            chosen = curr;
          }
       }
       *last = curr;
       curr = curr->next;
    }
-   curr = win_block;
+   curr = chosen;
 #endif
 
 #if defined WORST && WORST == 0
-   struct _block *win_block = NULL;
-   size_t difference = 0;
+   /*worst fit goes through the entire heap list and chooses
+    *the block with the block with the most remaining space after
+    *using the requested size*/
+    
+   struct _block *chosen = NULL;
+   //using 0 here instsead of INT_MIN since size_t is unsigned
+   size_t difference = 0; 
    
    while(curr)
    {
@@ -124,28 +134,46 @@ struct _block *findFreeBlock(struct _block **last, size_t size)
          if( ((curr->size) - size) > difference)
          {
             difference = (curr->size) - size;
-            win_block = curr;
+            chosen = curr;
          }
       }
       *last = curr;
       curr = curr->next;
    }
-   curr = win_block;
+   curr = chosen;
 #endif
 
 #if defined NEXT && NEXT == 0
-   //next fit optimizes first fit to keep track of previous block allocated
+   //next fit optimizes first fit to keep track of previous block allocated/reused
+   
+   //makes sure the heap list is not empty before setting the variable
    if(last_alloc != NULL)
    {
       curr = last_alloc;
    }
    
+   /*try to go all the way to the end of the heap list
+    *this is to take into account last_alloc being
+    *somewhere in the list*/
    while (curr && !(curr->free && curr->size >= size)) 
    {
       *last = curr;
       curr = curr->next;
    }
    
+   /*if we go through the list until current reaches NULL
+    *and the last reuse we did is not at the end of the list
+    *go through the heap list from the top again making sure
+    *we check all the blocks*/
+   if(curr == NULL && last_alloc != NULL)
+   {
+      curr = heapList;
+      while (curr && !(curr->free && curr->size >= size)) 
+      {
+         *last = curr;
+         curr = curr->next;
+      }
+   }
    last_alloc = curr;
    
 #endif
