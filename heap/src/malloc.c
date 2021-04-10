@@ -60,7 +60,7 @@ struct _block
 
 
 struct _block *heapList = NULL; /* Free list to track the _blocks available */
-struct _block *lastAllocated = NULL;
+struct _block *last_alloc = NULL; //keeping track of the 
 
 /*
  * \brief findFreeBlock
@@ -135,13 +135,19 @@ struct _block *findFreeBlock(struct _block **last, size_t size)
 
 #if defined NEXT && NEXT == 0
    //next fit optimizes first fit to keep track of previous block allocated
-   curr = lastAllocated;
+   if(last_alloc != NULL)
+   {
+      curr = last_alloc;
+   }
    
    while (curr && !(curr->free && curr->size >= size)) 
    {
       *last = curr;
-      curr  = curr->next;
+      curr = curr->next;
    }
+   
+   last_alloc = curr;
+   
 #endif
 
    return curr;
@@ -189,6 +195,12 @@ struct _block *growHeap(struct _block *last, size_t size)
    curr->size = size;
    curr->next = NULL;
    curr->free = false;
+   
+   //tracking number of growHeaps and current maximum heap size and number of blocks in the heap
+   max_heap += size;
+   num_blocks++;
+   num_grows++;
+   
    return curr;
 }
 
@@ -206,6 +218,7 @@ struct _block *growHeap(struct _block *last, size_t size)
  */
 void *malloc(size_t size) 
 {
+   num_requested = num_requested + size; //tracking total requested blocks
 
    if( atexit_registered == 0 )
    {
@@ -231,15 +244,20 @@ void *malloc(size_t size)
    {
       next = growHeap(last, size);
    }
+   else
+   {
+      num_reuses++; //tracking number of times an existing block is used without growing heap
+   }
 
    /* Could not find free _block or grow heap, so just return NULL */
-   if (next == NULL) 
+   if (next == NULL)
    {
       return NULL;
    }
    
    /* Mark _block as in use */
    next->free = false;
+   num_mallocs++;
 
    /* Return data address associated with _block */
    return BLOCK_DATA(next);
@@ -266,6 +284,7 @@ void free(void *ptr)
    struct _block *curr = BLOCK_HEADER(ptr);
    assert(curr->free == 0);
    curr->free = true;
+   num_frees++;
 }
 
 /* vim: set expandtab sts=3 sw=3 ts=6 ft=cpp: --------------------------------*/
