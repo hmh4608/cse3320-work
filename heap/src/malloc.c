@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <string.h>
 
 #define ALIGN4(s)         (((((s) - 1) >> 2) << 2) + 4)
 #define BLOCK_DATA(b)      ((b) + 1)
@@ -289,6 +290,47 @@ void *malloc(size_t size)
 
    /* Return data address associated with _block */
    return BLOCK_DATA(next);
+}
+
+/*
+ * \brief realloc
+ *
+ * reallocate provided memory to a specified size
+ *
+ * \param ptr address to the memory whose size is to be changed
+ * \param size size of the requested memory in bytes
+ *
+ * \return returns the requested memory allocation to the calling process 
+ * or NULL if failed
+ */
+void *realloc(void *ptr, size_t size)
+{
+	struct _block *new_block = ( struct _block * ) malloc ( size );
+	memset( new_block, 0, size );
+	memcpy ( new_block, ptr, size );
+	free( ptr );
+	return BLOCK_DATA(new_block);
+}
+
+/*
+ * \brief calloc
+ *
+ * finds a free _block of heap memory for the calling process.
+ * if there is no free _block that satisfies the request then grows the 
+ * heap and returns a new _block
+ *
+ * \param num the number of blocks each of size to request memory
+ * \param size size of the requested memory in bytes
+ *
+ * \return returns the requested memory allocation to the calling process 
+ * or NULL if failed
+ */
+void *calloc(size_t num, size_t size)
+{
+	size_t total_size = num * size;
+	struct _block *new_block = ( struct _block * ) malloc ( total_size );
+	memset( new_block, 0, total_size);
+	return BLOCK_DATA(new_block);
 }
 
 /*
