@@ -306,6 +306,7 @@ void *malloc(size_t size)
 void *realloc(void *ptr, size_t size)
 {
 	struct _block *new_block = ( struct _block * ) malloc ( size );
+	//move values to new memory address and deallocate the old pointer
 	memcpy ( new_block, ptr, size );
 	free( ptr );
 	return new_block;
@@ -328,6 +329,7 @@ void *calloc(size_t num, size_t size)
 {
 	size_t total_size = num * size;
 	struct _block *new_block = ( struct _block * ) malloc ( total_size );
+	//initialize values at each address in block
 	memset( new_block, 0, total_size);
 	return BLOCK_DATA(new_block);
 }
