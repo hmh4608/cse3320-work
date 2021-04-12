@@ -306,10 +306,9 @@ void *malloc(size_t size)
 void *realloc(void *ptr, size_t size)
 {
 	struct _block *new_block = ( struct _block * ) malloc ( size );
-	memset( new_block, 0, size );
 	memcpy ( new_block, ptr, size );
 	free( ptr );
-	return BLOCK_DATA(new_block);
+	return new_block;
 }
 
 /*
