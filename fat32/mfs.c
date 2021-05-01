@@ -31,6 +31,8 @@
 
 //additional functions
 int fileNameCmp(char input[], char fileName[]);
+int LBAToOffset(int32_t sector);
+int16_t nextLB(uint32_t sector, FILE* fp);
 
 
 //file and directory representation
@@ -183,33 +185,123 @@ int main()
 			}
 			else if(strcmp(arguments[0], "stat") == 0)
 			{
-						int i=0;
-
-						//go through directory items/files and
-						//print out the data about the file/directory the user inputted
-						for(i=0; i<NUM_ITEMS; i++)
-						{
-							char filename[12];
-							strncpy(filename, &directory[i].name[0], 11);
-							filename[12] = '\0';
+				int i = 0;
+				//go through directory items/files and
+				//print out the data about the file/directory the user inputted
+				for(i=0; i<NUM_ITEMS; i++)
+				{
+					char filename[12];
+					strncpy(filename, &directory[i].name[0], 11);
+					filename[12] = '\0';
 							
-							char input[strlen(arguments[1])];
-							strcpy(input, arguments[1]);
+					char input[strlen(arguments[1])];
+					strcpy(input, arguments[1]);
 							
-							if(fileNameCmp(input, filename) == 0)
-							{
-								printf("Attribute: %d\n", directory[i].attribute);
-								printf("File Size: %d\n", directory[i].fileSize);
-								printf("First Cluster Low: %d\n", directory[i].firstClusterLow);
-								printf("First Cluster High: %d\n", directory[i].firstClusterHigh);
-								break;
-							}
-						}
+					if(fileNameCmp(input, filename) == 0)
+					{
+						printf("Attribute: %d\n", directory[i].attribute);
+						printf("File Size: %d\n", directory[i].fileSize);
+						printf("First Cluster Low: %d\n", directory[i].firstClusterLow);
+						printf("First Cluster High: %d\n", directory[i].firstClusterHigh);
+						break;
+					}
+				}
 
-						if(i>15)
-						{
-							printf("Error: File not found\n");
-						}
+				if(i>NUM_ITEMS-1)
+				{
+					printf("Error: File not found\n");
+				}
+			}
+			else if(strcmp(arguments[0], "read") == 0)
+			{
+				int i = 0;
+				//go through directory items/files and find the matching file
+				for(i=0; i<NUM_ITEMS; i++)
+				{
+					char filename[12];
+					strncpy(filename, &directory[i].name[0], 11);
+					filename[12] = '\0';
+					
+					char input[strlen(arguments[1])];
+					strcpy(input, arguments[1]);
+							
+					if(fileNameCmp(input, filename) == 0)
+					{
+						break;
+					}
+				}
+				
+				//read from the file at the given position (in bytes) and output number of bytes specified
+				//arguments[2] - position
+				//arguments[3] - number of bytes to be read
+				int16_t nextCluster = directory[i].firstClusterLow;
+				int position = atoi(arguments[2]);
+				int remainingBytes = atoi(arguments[3]); //remaining number of bytes needed to be read
+				//each cluster/file is chopped up into certain number of sectors each with a certain number of bytes for each block
+				int clusterSize = BPB_BytesPerSec*BPB_SecPerClus;
+				int data;
+				
+				//if the position user wants to read from is at a position larger than
+				//the size of at least one block
+				//loop until we get to the right starting block
+				if(position > clusterSize)
+				{
+					while(nextCluster && position > clusterSize)
+					{
+						position -= clusterSize;
+						nextCluster = nextLB(nextCluster, image);
+					}
+				}
+				
+				int offset = LBAToOffset(nextCluster)+position;
+				while(remainingBytes > clusterSize)
+				{
+					fseek(image, offset, SEEK_SET);
+					
+					for(i=0; i<clusterSize; i++)
+					{
+						fread(&data, 1, 1, image);
+						printf("%d ", data);
+					}
+					
+					nextCluster = nextLB(nextCluster, image);
+					offset = LBAToOffset(nextCluster);
+					remainingBytes -= clusterSize;
+				}
+				
+				//remainder
+				if(remainingBytes > 0)
+				{
+					fseek(image, offset, SEEK_SET);
+					for(i=0; i<remainingBytes; i++)
+					{
+						fread(&data, 1, 1, image);
+						printf("%d ", data);
+					}
+				}
+			}
+			else if(strcmp(arguments[0], "get") == 0)
+			{
+				int i = 0;
+				//retrieve the file from the FAT32 image and place it in current working directory
+				int16_t nextCluster = directory[i].firstClusterLow;
+				int remainingBytes = atoi(arguments[3]); //remaining number of bytes needed to be read
+				//each cluster/file is chopped up into certain number of sectors each with a certain number of bytes for each block
+				int clusterSize = BPB_BytesPerSec;
+				unsigned char data[clusterSize];
+				while(remainingBytes > clusterSize)
+				{
+					fseek(image, LBAToOffset(nextCluster), SEEK_SET);
+					fread(data, 1, clusterSize, image);
+					
+					for(i=0; i<remainingBytes; i++)
+					{
+						printf("%d ", data[i]);
+					}
+						
+					nextCluster = nextLB(nextCluster, image);
+					remainingBytes -= clusterSize;
+				}
 			}
 		}
 			
@@ -265,4 +357,31 @@ int fileNameCmp(char input[], char fileName[])
 	}
 	
 	return -1; //did not match
+}
+
+/*
+*finds the starting address of a block of data given the sector number
+*sector - current sector number that points to a block of data
+*returns the value of the address for that block of data
+*/
+int LBAToOffset(int32_t sector)
+{
+	return ((sector-2) * BPB_BytesPerSec) + (BPB_BytesPerSec*BPB_RsvdSecCnt) + (BPB_NumFATS * BPB_FATSz32 * BPB_BytesPerSec);
+}
+
+/*
+*given a logical block address, look up in the first FAT
+*return the next logical block address of the block in the file
+*return -1 if there is no further blocks
+*
+*sector - current sector number that points to a block of data
+*fp - file system image
+*/
+int16_t nextLB(uint32_t sector, FILE* fp)
+{
+		uint32_t FATAddress = (BPB_BytesPerSec * BPB_RsvdSecCnt) + (sector * 4);
+		int16_t val;
+		fseek(fp, FATAddress, SEEK_SET);
+		fread(&val, 2, 1, fp);
+		return val;
 }
