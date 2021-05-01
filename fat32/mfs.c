@@ -110,7 +110,7 @@ int main()
     		
     		if(isOpen) //check if a file system is already open
     		{
-    			printf("Error: File system image already open.");
+    			printf("Error: File system image already open.\n");
     		}
     		else
     		{
@@ -164,7 +164,7 @@ int main()
 				}
 				else
 				{
-					printf("Error: File system not open");
+					printf("Error: File system not open\n");
 				}
 			}
     	else if(!isOpen) //check if a file system is open before processing any other commands after a close
@@ -184,8 +184,7 @@ int main()
 			else if(strcmp(arguments[0], "stat") == 0)
 			{
 						int i=0;
-						int found=0;
-						
+
 						//go through directory items/files and
 						//print out the data about the file/directory the user inputted
 						for(i=0; i<NUM_ITEMS; i++)
@@ -203,11 +202,11 @@ int main()
 								printf("File Size: %d\n", directory[i].fileSize);
 								printf("First Cluster Low: %d\n", directory[i].firstClusterLow);
 								printf("First Cluster High: %d\n", directory[i].firstClusterHigh);
-								found = 1;
+								break;
 							}
 						}
-						
-						if(!found)
+
+						if(i>15)
 						{
 							printf("Error: File not found\n");
 						}
