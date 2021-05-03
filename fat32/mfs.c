@@ -239,29 +239,40 @@ int main()
 				int remainingBytes = atoi(arguments[3]); //remaining number of bytes needed to be read
 				//each cluster/file is chopped up into certain number of sectors each with a certain number of bytes for each block
 				int clusterSize = BPB_BytesPerSec*BPB_SecPerClus;
-				int data;
+				unsigned char data[clusterSize]; //buffer to read in data
 				
 				//if the position user wants to read from is at a position larger than
 				//the size of at least one block
 				//loop until we get to the right starting block
 				if(position > clusterSize)
 				{
-					while(nextCluster && position > clusterSize)
+					while(position > clusterSize)
 					{
 						position -= clusterSize;
 						nextCluster = nextLB(nextCluster, image);
 					}
 				}
 				
+				//read in the rest of the block starting from the position first
 				int offset = LBAToOffset(nextCluster)+position;
+				fseek(image, offset, SEEK_SET);
+				fread(&data[i], clusterSize-position, 1, image);
+				offset = LBAToOffset(nextCluster);
+				
+				for(i=0; i<clusterSize-position; i++)
+				{
+					printf("%x ", data[i]);
+				}
+				
 				while(remainingBytes > clusterSize)
 				{
 					fseek(image, offset, SEEK_SET);
+					fread(&data[i], clusterSize, 1, image);
 					
+					//print out the data
 					for(i=0; i<clusterSize; i++)
 					{
-						fread(&data, 1, 1, image);
-						printf("%d ", data);
+						printf("%x ", data[i]);
 					}
 					
 					nextCluster = nextLB(nextCluster, image);
@@ -275,32 +286,92 @@ int main()
 					fseek(image, offset, SEEK_SET);
 					for(i=0; i<remainingBytes; i++)
 					{
-						fread(&data, 1, 1, image);
-						printf("%d ", data);
+						fread(&data[i], 1, 1, image);
+						printf("%x ", data[i]);
 					}
 				}
 			}
 			else if(strcmp(arguments[0], "get") == 0)
 			{
 				int i = 0;
-				//retrieve the file from the FAT32 image and place it in current working directory
-				int16_t nextCluster = directory[i].firstClusterLow;
-				int remainingBytes = atoi(arguments[3]); //remaining number of bytes needed to be read
-				//each cluster/file is chopped up into certain number of sectors each with a certain number of bytes for each block
-				int clusterSize = BPB_BytesPerSec;
-				unsigned char data[clusterSize];
-				while(remainingBytes > clusterSize)
+				char fname[12]; //for converting the file name to proper form to write
+				memset(fname, '\0', 12);
+				//go through directory items/files and find the matching file
+				for(i=0; i<NUM_ITEMS; i++)
 				{
-					fseek(image, LBAToOffset(nextCluster), SEEK_SET);
-					fread(data, 1, clusterSize, image);
+					char filename[12];
+					strncpy(filename, &directory[i].name[0], 11);
+					filename[12] = '\0';
 					
-					for(i=0; i<remainingBytes; i++)
+					char input[strlen(arguments[1])];
+					strcpy(input, arguments[1]);
+							
+					if(fileNameCmp(input, filename) == 0)
 					{
-						printf("%d ", data[i]);
-					}
+						//convert the file name to proper form
+						char* token = strtok(filename, " \t");
+						if(strlen(filename) == 11) //max file name length
+						{
+							strncpy(fname, filename, strlen(filename)-3); //assuming the extension is 3 letters long or .txt
+							fname[strlen(filename)-3] = '.';
+							strcpy(&fname[strlen(filename)-2], &filename[(strlen(filename)-3)]);
+						}
+						else
+						{
+							strncpy(fname, token, strlen(token));
+							fname[strlen(token)] = '.';
+							token = strtok(NULL, " \t"); //skip all spaces
+							if(token)
+							{
+								strncpy(&fname[strlen(fname)], token, strlen(token));
+							}
+						}
 						
-					nextCluster = nextLB(nextCluster, image);
-					remainingBytes -= clusterSize;
+						int j;
+						for(j=0; j<strlen(fname); j++)
+						{
+							fname[j] = tolower(fname[j]);
+						}
+						break;
+					}
+				}
+				
+				if(i>NUM_ITEMS-1)
+				{
+					printf("Error: File not found\n");
+				}
+				else
+				{
+					//create a new file in current working directory
+					FILE* outputFile = fopen(fname, "w");
+					
+					//retrieve the file from the FAT32 image and place it in current working directory
+					int nextCluster = directory[i].firstClusterLow;
+					int remainingBytes = directory[i].fileSize; //remaining number of bytes needed to be read
+					
+					//each cluster/file is chopped up into certain number of sectors each with a certain number of bytes for each block
+					int clusterSize = BPB_BytesPerSec*BPB_SecPerClus;
+					unsigned char data[clusterSize]; //buffer to read in data
+					while(remainingBytes > clusterSize)
+					{
+						fseek(image, LBAToOffset(nextCluster), SEEK_SET);
+						fread(&data[0], clusterSize, 1, image);
+						fwrite(data, clusterSize, 1, outputFile);
+							
+						nextCluster = nextLB(nextCluster, image);
+						remainingBytes -= clusterSize;
+					}
+					
+					//remainder
+					if(remainingBytes > 0)
+					{
+						fseek(image, LBAToOffset(nextCluster), SEEK_SET);
+						memset(data, '\0', clusterSize);
+						fread(&data[0], remainingBytes, 1, image);
+						fwrite(data, remainingBytes, 1, outputFile);
+					}
+					
+					fclose(outputFile);
 				}
 			}
 		}
@@ -366,6 +437,11 @@ int fileNameCmp(char input[], char fileName[])
 */
 int LBAToOffset(int32_t sector)
 {
+	if(sector==0)
+	{
+		return 2; //root directory is at 2 not 0
+	}
+	
 	return ((sector-2) * BPB_BytesPerSec) + (BPB_BytesPerSec*BPB_RsvdSecCnt) + (BPB_NumFATS * BPB_FATSz32 * BPB_BytesPerSec);
 }
 
