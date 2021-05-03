@@ -294,8 +294,9 @@ int main()
 			else if(strcmp(arguments[0], "get") == 0)
 			{
 				int i = 0;
-				char fname[12]; //for converting the file name to proper form to write
+				char fname[12]; //for converting the file name to proper name form to write to
 				memset(fname, '\0', 12);
+				
 				//go through directory items/files and find the matching file
 				for(i=0; i<NUM_ITEMS; i++)
 				{
@@ -310,11 +311,11 @@ int main()
 					{
 						//convert the file name to proper form
 						char* token = strtok(filename, " \t");
-						if(strlen(filename) == 11) //max file name length
+						if(strlen(filename) == 11) //in case file name takes up max file name length
 						{
 							strncpy(fname, filename, strlen(filename)-3); //assuming the extension is 3 letters long or .txt
 							fname[strlen(filename)-3] = '.';
-							strcpy(&fname[strlen(filename)-2], &filename[(strlen(filename)-3)]);
+							strcpy(&fname[strlen(filename)-2], &filename[(strlen(filename)-3)]); //read in the rest of the extension name in the file name
 						}
 						else
 						{
@@ -327,6 +328,7 @@ int main()
 							}
 						}
 						
+						//turn the all the letters to lowercase to match user input
 						int j;
 						for(j=0; j<strlen(fname); j++)
 						{
@@ -346,15 +348,20 @@ int main()
 					FILE* outputFile = fopen(fname, "w");
 					
 					//retrieve the file from the FAT32 image and place it in current working directory
-					int nextCluster = directory[i].firstClusterLow;
+					
+					int nextCluster = directory[i].firstClusterLow; //starting cluster number
 					int remainingBytes = directory[i].fileSize; //remaining number of bytes needed to be read
 					
 					//each cluster/file is chopped up into certain number of sectors each with a certain number of bytes for each block
 					int clusterSize = BPB_BytesPerSec*BPB_SecPerClus;
 					unsigned char data[clusterSize]; //buffer to read in data
+					
+					//continuously read in blocks of data as much as possible until we no longer need  to continuously look up
+					//the next blocks in FAT
 					while(remainingBytes > clusterSize)
 					{
 						fseek(image, LBAToOffset(nextCluster), SEEK_SET);
+						//read-write 1 item of total bytes in one cluster
 						fread(&data[0], clusterSize, 1, image);
 						fwrite(data, clusterSize, 1, outputFile);
 							
@@ -362,7 +369,7 @@ int main()
 						remainingBytes -= clusterSize;
 					}
 					
-					//remainder
+					//remainder cluster to write to file
 					if(remainingBytes > 0)
 					{
 						fseek(image, LBAToOffset(nextCluster), SEEK_SET);
