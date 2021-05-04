@@ -238,8 +238,6 @@ int main()
 				int position = atoi(arguments[2]);
 				int remainingBytes = atoi(arguments[3]); //remaining number of bytes needed to be read
 				
-				printf("position: %d remaining bytes: %d\n", position, remainingBytes);
-				
 				//each cluster/file is chopped up into certain number of sectors each with a certain number of bytes for each block
 				int clusterSize = BPB_BytesPerSec*BPB_SecPerClus;
 				unsigned char data[clusterSize]; //buffer to read in data
