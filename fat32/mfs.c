@@ -242,71 +242,86 @@ int main()
 					}
 				}
 				
-				//read from the file at the given position (in bytes) and output number of bytes specified
-				//arguments[2] - position
-				//arguments[3] - number of bytes to be read
-				int nextCluster = directory[i].firstClusterLow;
-				int position = atoi(arguments[2]);
-				int remainingBytes = atoi(arguments[3]); //remaining number of bytes needed to be read
-				
-				//each cluster/file is chopped up into certain number of sectors each with a certain number of bytes for each block
-				int clusterSize = BPB_BytesPerSec*BPB_SecPerClus;
-				unsigned char data[clusterSize]; //buffer to read in data
-				
-				//if the position user wants to read from is at a position larger than
-				//the size of at least one block
-				//loop until we get to the right starting block
-				if(position > clusterSize)
+				if(i>NUM_ITEMS-1)
 				{
-					while(position > clusterSize)
+					printf("Error: File not found\n");
+				}
+				
+				else
+				{
+					//read from the file at the given position (in bytes) and output number of bytes specified
+					//arguments[2] - position
+					//arguments[3] - number of bytes to be read
+					int nextCluster = directory[i].firstClusterLow;
+					int position = atoi(arguments[2]);
+					int remainingBytes = atoi(arguments[3]); //remaining number of bytes needed to be read
+					
+					//each cluster/file is chopped up into certain number of sectors each with a certain number of bytes for each block
+					int clusterSize = BPB_BytesPerSec*BPB_SecPerClus;
+					unsigned char data[clusterSize]; //buffer to read in data
+					
+					//if the position user wants to read from is at a position larger than
+					//the size of at least one block
+					//loop until we get to the right starting block
+					if(position > clusterSize)
 					{
-						position -= clusterSize;
+						while(position > clusterSize)
+						{
+							position -= clusterSize;
+							nextCluster = nextLB(nextCluster, image);
+						}
+						
+						printf("position: %d next cluster: %d offset: %d\n", position, nextCluster, LBAToOffset(nextCluster)+position);
+						
+						//if the number of bytes user wants read goes beyond the current block
+						//read in the rest of the block starting from the position first
+						if(remainingBytes > clusterSize-position)
+						{
+							fseek(image, LBAToOffset(nextCluster)+position, SEEK_SET);
+							memset(data, '\0', clusterSize);
+							fread(&data[0], clusterSize-position, 1, image);
+							for(i=0; i<clusterSize-position; i++)
+							{
+								printf("%x ", data[i]);
+							}
+							//reset position to 0 since from now on
+							//we'll be reading each cluster from the beginning
+							position = 0;
+						}
+					}
+					
+					//continuously read in blocks of data as much as possible until we no longer need  to continuously look up
+					//the next blocks in FAT
+					while(remainingBytes > clusterSize)
+					{
+						fseek(image, LBAToOffset(nextCluster), SEEK_SET);
+						//read-write 1 item of total bytes in one cluster
+						fread(&data[0], clusterSize, 1, image);
+						
+						for(i=0; i<clusterSize; i++)
+						{
+							printf("%x ", data[i]);
+						}
+								
 						nextCluster = nextLB(nextCluster, image);
+						remainingBytes -= clusterSize;
 					}
-					//read in the rest of the block starting from the position first
-					fseek(image, LBAToOffset(nextCluster)+position, SEEK_SET);
-					memset(data, '\0', clusterSize);
-					fread(&data[0], clusterSize-position, 1, image);
-					for(i=0; i<clusterSize-position; i++)
+						
+					//remainder cluster to write to file
+					if(remainingBytes > 0)
 					{
-						printf("%x ", data[i]);
+						fseek(image, LBAToOffset(nextCluster)+position, SEEK_SET);
+						memset(data, '\0', clusterSize);
+						fread(&data[0], remainingBytes, 1, image);
+						
+						for(i=0; i<remainingBytes; i++)
+						{
+							printf("%x ", data[i]);
+						}
 					}
-					//reset position to 0 since from now on
-					//we'll be reading each cluster from the beginning
-					position = 0; 
-				}
-				
-				//continuously read in blocks of data as much as possible until we no longer need  to continuously look up
-				//the next blocks in FAT
-				while(remainingBytes > clusterSize)
-				{
-					fseek(image, LBAToOffset(nextCluster), SEEK_SET);
-					//read-write 1 item of total bytes in one cluster
-					fread(&data[0], clusterSize, 1, image);
 					
-					for(i=0; i<clusterSize; i++)
-					{
-						printf("%x ", data[i]);
-					}
-							
-					nextCluster = nextLB(nextCluster, image);
-					remainingBytes -= clusterSize;
+					printf("\n");
 				}
-					
-				//remainder cluster to write to file
-				if(remainingBytes > 0)
-				{
-					fseek(image, LBAToOffset(nextCluster)+position, SEEK_SET);
-					memset(data, '\0', clusterSize);
-					fread(&data[0], remainingBytes, 1, image);
-					
-					for(i=0; i<remainingBytes; i++)
-					{
-						printf("%x ", data[i]);
-					}
-				}
-				
-				printf("\n");
 			}
 			
 			else if(strcmp(arguments[0], "get") == 0)
