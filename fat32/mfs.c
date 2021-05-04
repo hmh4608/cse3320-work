@@ -59,7 +59,7 @@ int main()
 {
 	
 	FILE* image;
-	FILE* rootDir; //pointer to the root directory
+	int rootDirCluster; //variable to hold the root directory's low cluster
 	int isOpen = 0; //to check if file system image is already opened or closed
   char* cmd_str = (char*) malloc( MAX_COMMAND_SIZE );
 
@@ -157,8 +157,8 @@ int main()
 						//go to the root directory and read in its contents
 						//each directory only has at most 16 items (NUM_ITEMS)
 						fseek(image, ((BPB_NumFATS*BPB_FATSz32*BPB_BytesPerSec)+(BPB_RsvdSecCnt*BPB_BytesPerSec)), SEEK_SET);
-						rootDir = image;
-						fread(&directory, sizeof(DIR_Entry), NUM_ITEMS, image);
+            fread(&directory, sizeof(DIR_Entry), NUM_ITEMS, image);
+						rootDirCluster = directory[0].firstClusterLow;
 					}
     		}
     	}
@@ -431,10 +431,10 @@ int main()
           
           //find the offset of the previous working directory and fseek to it
           //if the working directory is the root directory then the command cannot be executed
-          if (directory[0].firstClusterLow == 0)
+          if (directory[0].firstClusterLow == rootDirCluster)
           { 
               root = 1;
-              printf("This is the root directory\n");
+              printf("Error: This is the root directory\n");
           }
           
           else if (directory[1].firstClusterLow == 0)
