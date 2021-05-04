@@ -270,9 +270,7 @@ int main()
 							position -= clusterSize;
 							nextCluster = nextLB(nextCluster, image);
 						}
-						
-						printf("position: %d next cluster: %d offset: %d\n", position, nextCluster, LBAToOffset(nextCluster)+position);
-						
+
 						//if the number of bytes user wants read goes beyond the current block
 						//read in the rest of the block starting from the position first
 						if(remainingBytes > clusterSize-position)
