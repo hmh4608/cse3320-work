@@ -47,7 +47,7 @@ typedef struct __attribute__((__packed__)) DirectoryEntry
 	uint32_t fileSize;
 }DIR_Entry;
 
-DIR_Entry directory[16]; //current directory and its 16 entries
+DIR_Entry directory[NUM_ITEMS]; //current directory and its 16 entries
 
 int16_t BPB_BytesPerSec;
 int8_t BPB_SecPerClus;
@@ -107,13 +107,18 @@ int main()
     //FAT32 functionality
     if(arguments[0] != NULL)
     {
-    	if(strcmp(arguments[0], "open") == 0) //open a fat32 image
+    	if(strcmp(arguments[0], "exit") == 0) //exits the program
+      {
+        exit(0);
+      }
+
+    	else if(strcmp(arguments[0], "open") == 0) //open a fat32 image
     	{
-    		
     		if(isOpen) //check if a file system is already open
     		{
     			printf("Error: File system image already open.\n");
     		}
+    		
     		else
     		{
     			//open the file system image
@@ -123,6 +128,7 @@ int main()
 		  		{
 		  			printf("Error: File system image not found.\n"); 
 					}
+					
 					else
 					{
 						isOpen = 1;
@@ -156,6 +162,7 @@ int main()
 					}
     		}
     	}
+    	
     	else if(strcmp(arguments[0], "close") == 0) //close fat32 image
 			{
 				//check if a file system not currently open
@@ -164,11 +171,13 @@ int main()
 					fclose(image);
 					isOpen = 0;
 				}
+				
 				else
 				{
 					printf("Error: File system not open\n");
 				}
 			}
+			
     	else if(!isOpen) //check if a file system is open before processing any other commands after a close
     	{
 				printf("Error: File system image must be opened first\n");
@@ -177,12 +186,13 @@ int main()
     	else if(strcmp(arguments[0], "info") == 0)
     	{
     		//print out information about file system in hexadecimal and base 10
-				printf("BPB_BytesPerSec: %5d%5x\n", BPB_BytesPerSec, BPB_BytesPerSec);
-		  	printf("BPB_SecPerClus: %5d%5x\n", BPB_SecPerClus, BPB_SecPerClus);
-		  	printf("BPB_RsvdSecCnt: %5d%5x\n", BPB_RsvdSecCnt, BPB_RsvdSecCnt);
-		  	printf("BPB_NumFATS: %5d%5x\n", BPB_NumFATS, BPB_NumFATS);
-		  	printf("BPB_FATSz32: %5d%5x\n", BPB_FATSz32, BPB_FATSz32);
+				printf("%-18s %-7d%-7x\n", "BPB_BytesPerSec:", BPB_BytesPerSec, BPB_BytesPerSec);
+			  printf("%-18s %-7d%-7x\n", "BPB_SecPerClus:", BPB_SecPerClus, BPB_SecPerClus);
+			  printf("%-18s %-7d%-7x\n", "BPB_RsvdSecCnt:", BPB_RsvdSecCnt, BPB_RsvdSecCnt);
+			  printf("%-18s %-7d%-7x\n", "BPB_NumFATS:", BPB_NumFATS, BPB_NumFATS);
+			  printf("%-18s %-7d%-7x\n", "BPB_FATSz32:", BPB_FATSz32, BPB_FATSz32);
 			}
+			
 			else if(strcmp(arguments[0], "stat") == 0)
 			{
 				int i = 0;
@@ -212,6 +222,7 @@ int main()
 					printf("Error: File not found\n");
 				}
 			}
+			
 			else if(strcmp(arguments[0], "read") == 0)
 			{
 				int i = 0;
@@ -297,6 +308,7 @@ int main()
 				
 				printf("\n");
 			}
+			
 			else if(strcmp(arguments[0], "get") == 0)
 			{
 				int i = 0;
@@ -323,6 +335,7 @@ int main()
 							fname[strlen(filename)-3] = '.';
 							strcpy(&fname[strlen(filename)-2], &filename[(strlen(filename)-3)]); //read in the rest of the extension name in the file name
 						}
+						
 						else
 						{
 							strncpy(fname, token, strlen(token));
@@ -348,6 +361,7 @@ int main()
 				{
 					printf("Error: File not found\n");
 				}
+				
 				else
 				{
 					//create a new file in current working directory
@@ -387,19 +401,104 @@ int main()
 					fclose(outputFile);
 				}
 			}
-		}
 			
-    
-    //Now print the tokenized input as a debug check
-    int arg_index  = 0;
-    for( arg_index = 0; arg_index < arg_count; arg_index ++ ) 
-    {
-      printf("arguments[%d] = %s\n", arg_index, arguments[arg_index] );  
-    }
+			else if(strcmp(arguments[0], "ls") == 0) //lists the directory contents
+			{
+				int i=0;
+
+				//go through the directory and lists its contents
+				//given that it is not a hidden, deleted, or a system file
+				for(i=0; i<NUM_ITEMS; i++)
+				{
+					char filename[12];
+					strncpy(filename, &directory[i].name[0], 11);
+					filename[12] = '\0';
+
+					if( (directory[i].attribute == 0x01 || directory[i].attribute == 0x10 || directory[i].attribute == 0x20) && directory[i].name[0] != (char)0xe5)
+					{
+						printf("%s\n", filename);
+					}
+				}
+			}
+			
+      else if(strcmp(arguments[0], "cd") == 0) //change the working directory to the users specified directory
+      {
+        //changing back to the previous working directory
+        if(strcmp(arguments[1], "..") == 0) 
+        {   
+          int prevOffset;
+          int root = 0;
+          
+          //find the offset of the previous working directory and fseek to it
+          //if the working directory is the root directory then the command cannot be executed
+          if (directory[0].firstClusterLow == 0)
+          { 
+              root = 1;
+              printf("This is the root directory\n");
+          }
+          
+          else if (directory[1].firstClusterLow == 0)
+          {
+            prevOffset = LBAToOffset(2);
+          }
+          
+          else
+          {
+            prevOffset = LBAToOffset(directory[1].firstClusterLow);
+          }
+          
+          if(!root)
+          {
+            fseek(image, prevOffset, SEEK_SET);
+            fread(&directory, sizeof(DIR_Entry), NUM_ITEMS, image);
+          }
+        }
+        
+        //change to a directory within the working directory
+				else{
+				  int i = 0;
+				  
+				  //for each item in the directory, check to see if a file/directory name matches the user's input
+		      for(i=0; i<NUM_ITEMS; i++)
+					{
+						char filename[12];
+		        strncpy(filename, &directory[i].name[0], 11);
+						filename[12] = '\0';
+
+						char input[strlen(arguments[1])];
+						strcpy(input, arguments[1]);
+		         
+            
+					 	if(fileNameCmp(input, filename) == 0)
+		        {
+		          if(directory[i].attribute == 0x20 || directory[i].attribute == 0x01)
+		          {
+                //an error when  the user inputs a filename that is not a directory
+		            printf("Error: %s is not a directory\n", arguments[1]);
+		            break;
+		          }
+		          else
+		          {
+                //change to the directory if it is found in the working directory
+		            int newDirCluster = directory[i].firstClusterLow;
+		            int newDirOffset = LBAToOffset(newDirCluster);
+		            fseek(image, newDirOffset, SEEK_SET);
+		            fread(&directory, sizeof(DIR_Entry), NUM_ITEMS, image);
+		            break;
+		          }
+		        }
+		      }  
+					if(i>15)
+					{
+						printf("Error: Directory not found\n");
+					}
+				}
+			}
+		}
 
     free( working_root );
-
   }
+  
   return 0;
 }
 
@@ -450,11 +549,6 @@ int fileNameCmp(char input[], char fileName[])
 */
 int LBAToOffset(int32_t cluster)
 {
-	if(cluster==0)
-	{
-		return 2; //root directory is at 2 not 0
-	}
-	
 	return ((cluster-2) * BPB_BytesPerSec) + (BPB_BytesPerSec*BPB_RsvdSecCnt) + (BPB_NumFATS * BPB_FATSz32 * BPB_BytesPerSec);
 }
 
