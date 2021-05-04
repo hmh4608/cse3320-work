@@ -19,7 +19,7 @@
 #include <stdint.h>
 #include <ctype.h>
 
-#define MAX_NUM_ARGUMENTS 3
+#define MAX_NUM_ARGUMENTS 4
 
 #define WHITESPACE " \t\n"      // We want to split our command line up into tokens
                                 // so we need to define what delimits our tokens.
@@ -31,8 +31,8 @@
 
 //additional functions
 int fileNameCmp(char input[], char fileName[]);
-int LBAToOffset(int32_t sector);
-int16_t nextLB(uint32_t sector, FILE* fp);
+int LBAToOffset(int32_t cluster);
+int16_t nextLB(uint32_t cluster, FILE* fp);
 
 
 //file and directory representation
@@ -234,9 +234,12 @@ int main()
 				//read from the file at the given position (in bytes) and output number of bytes specified
 				//arguments[2] - position
 				//arguments[3] - number of bytes to be read
-				int16_t nextCluster = directory[i].firstClusterLow;
+				int nextCluster = directory[i].firstClusterLow;
 				int position = atoi(arguments[2]);
 				int remainingBytes = atoi(arguments[3]); //remaining number of bytes needed to be read
+				
+				printf("position: %d remaining bytes: %d\n", position, remainingBytes);
+				
 				//each cluster/file is chopped up into certain number of sectors each with a certain number of bytes for each block
 				int clusterSize = BPB_BytesPerSec*BPB_SecPerClus;
 				unsigned char data[clusterSize]; //buffer to read in data
@@ -251,45 +254,50 @@ int main()
 						position -= clusterSize;
 						nextCluster = nextLB(nextCluster, image);
 					}
+					//read in the rest of the block starting from the position first
+					fseek(image, LBAToOffset(nextCluster)+position, SEEK_SET);
+					memset(data, '\0', clusterSize);
+					fread(&data[0], clusterSize-position, 1, image);
+					for(i=0; i<clusterSize-position; i++)
+					{
+						printf("%x ", data[i]);
+					}
+					//reset position to 0 since from now on
+					//we'll be reading each cluster from the beginning
+					position = 0; 
 				}
 				
-				//read in the rest of the block starting from the position first
-				int offset = LBAToOffset(nextCluster)+position;
-				fseek(image, offset, SEEK_SET);
-				fread(&data[i], clusterSize-position, 1, image);
-				offset = LBAToOffset(nextCluster);
-				
-				for(i=0; i<clusterSize-position; i++)
-				{
-					printf("%x ", data[i]);
-				}
-				
+				//continuously read in blocks of data as much as possible until we no longer need  to continuously look up
+				//the next blocks in FAT
 				while(remainingBytes > clusterSize)
 				{
-					fseek(image, offset, SEEK_SET);
-					fread(&data[i], clusterSize, 1, image);
+					fseek(image, LBAToOffset(nextCluster), SEEK_SET);
+					//read-write 1 item of total bytes in one cluster
+					fread(&data[0], clusterSize, 1, image);
 					
-					//print out the data
 					for(i=0; i<clusterSize; i++)
 					{
 						printf("%x ", data[i]);
 					}
-					
+							
 					nextCluster = nextLB(nextCluster, image);
-					offset = LBAToOffset(nextCluster);
 					remainingBytes -= clusterSize;
 				}
-				
-				//remainder
+					
+				//remainder cluster to write to file
 				if(remainingBytes > 0)
 				{
-					fseek(image, offset, SEEK_SET);
+					fseek(image, LBAToOffset(nextCluster)+position, SEEK_SET);
+					memset(data, '\0', clusterSize);
+					fread(&data[0], remainingBytes, 1, image);
+					
 					for(i=0; i<remainingBytes; i++)
 					{
-						fread(&data[i], 1, 1, image);
 						printf("%x ", data[i]);
 					}
 				}
+				
+				printf("\n");
 			}
 			else if(strcmp(arguments[0], "get") == 0)
 			{
@@ -439,17 +447,17 @@ int fileNameCmp(char input[], char fileName[])
 
 /*
 *finds the starting address of a block of data given the sector number
-*sector - current sector number that points to a block of data
+*cluster - current cluster number that points to a block of data
 *returns the value of the address for that block of data
 */
-int LBAToOffset(int32_t sector)
+int LBAToOffset(int32_t cluster)
 {
-	if(sector==0)
+	if(cluster==0)
 	{
 		return 2; //root directory is at 2 not 0
 	}
 	
-	return ((sector-2) * BPB_BytesPerSec) + (BPB_BytesPerSec*BPB_RsvdSecCnt) + (BPB_NumFATS * BPB_FATSz32 * BPB_BytesPerSec);
+	return ((cluster-2) * BPB_BytesPerSec) + (BPB_BytesPerSec*BPB_RsvdSecCnt) + (BPB_NumFATS * BPB_FATSz32 * BPB_BytesPerSec);
 }
 
 /*
@@ -457,12 +465,12 @@ int LBAToOffset(int32_t sector)
 *return the next logical block address of the block in the file
 *return -1 if there is no further blocks
 *
-*sector - current sector number that points to a block of data
+*cluster - current sector number that points to a block of data
 *fp - file system image
 */
-int16_t nextLB(uint32_t sector, FILE* fp)
+int16_t nextLB(uint32_t cluster, FILE* fp)
 {
-		uint32_t FATAddress = (BPB_BytesPerSec * BPB_RsvdSecCnt) + (sector * 4);
+		uint32_t FATAddress = (BPB_BytesPerSec * BPB_RsvdSecCnt) + (cluster * 4);
 		int16_t val;
 		fseek(fp, FATAddress, SEEK_SET);
 		fread(&val, 2, 1, fp);
